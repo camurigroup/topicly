@@ -7,13 +7,9 @@
 
 ---
 
-## ⚠️ Regras de trabalho — PRIORIDADE MÁXIMA
+## ⚠️ Regra de trabalho — PRIORIDADE MÁXIMA
 
-Estas regras valem acima de qualquer outra orientação deste documento:
-
-1. **Commit a cada micro-alteração e teste.** Toda mudança pequena que compile e/ou passe nos testes vira um commit próprio, imediatamente — nunca acumular várias mudanças num commit grande.
-2. **Claude NUNCA aparece como contribuidor.** Proibido adicionar linhas de atribuição (`Co-Authored-By`, `🤖 Generated with…` ou equivalentes) e proibido definir Claude como autor/co-autor. O autor de todo commit é sempre o dono do repositório.
-3. **Conventional Commits:** mensagens curtas no formato `feat:`, `fix:`, `test:`, `refactor:`, `chore:`, `docs:`, `perf:`, `ci:`.
+**Commit a cada micro-alteração e teste.** Toda mudança pequena que compile e/ou passe nos testes vira um commit próprio, imediatamente — nunca acumular várias mudanças num commit grande. Mensagens curtas em Conventional Commits (`feat:`, `fix:`, `test:`, `refactor:`, `chore:`, `docs:`, `perf:`, `ci:`).
 
 ---
 
