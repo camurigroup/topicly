@@ -1,0 +1,93 @@
+# Forum Framework — orquestração local.
+# Bancos, Redis e MinIO sobem sob profiles; escolha o banco via DB_DRIVER no .env.
+#
+#   Postgres (padrão):  docker compose up api web postgres
+#   MariaDB:            docker compose --profile mariadb up api web mariadb
+#   Com Redis:         docker compose --profile redis up ...
+#   Com MinIO:         docker compose --profile minio up ...
+
+services:
+  api:
+    build: ./apps/api
+    env_file: .env
+    environment:
+      API_PORT: "8080"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+    restart: unless-stopped
+
+  web:
+    build: ./apps/web
+    environment:
+      NEXT_PUBLIC_API_URL: "${API_URL:-http://localhost:8080}"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: "${DB_USER:-forum}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD:-forum}"
+      POSTGRES_DB: "${DB_NAME:-forum}"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-forum} -d ${DB_NAME:-forum}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  mariadb:
+    image: mariadb:11
+    profiles: ["mariadb"]
+    environment:
+      MARIADB_USER: "${DB_USER:-forum}"
+      MARIADB_PASSWORD: "${DB_PASSWORD:-forum}"
+      MARIADB_DATABASE: "${DB_NAME:-forum}"
+      MARIADB_ROOT_PASSWORD: "${DB_PASSWORD:-forum}"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["redis"]
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    profiles: ["minio"]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: "${MINIO_ACCESS_KEY:-minioadmin}"
+      MINIO_ROOT_PASSWORD: "${MINIO_SECRET_KEY:-minioadmin}"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  mariadb_data:
+  minio_data:
