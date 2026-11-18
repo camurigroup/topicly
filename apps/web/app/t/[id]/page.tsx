@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { ReplyForm, ReplyItem, type ReplyNode } from "@/components/reply-item";
+import { ReportButton } from "@/components/report-button";
 import { RichText } from "@/components/rich-text";
 import { Button } from "@/components/ui/button";
 import { api, type Reply, type Topic } from "@/lib/api";
@@ -202,6 +203,9 @@ export default function TopicPage() {
               {topic.isLocked ? "Desbloquear" : "Bloquear"}
             </Button>
           )}
+          <div className="ml-auto">
+            <ReportButton targetType="topic" targetId={topic.id} ownerId={topic.author.id} />
+          </div>
         </div>
       </article>
 

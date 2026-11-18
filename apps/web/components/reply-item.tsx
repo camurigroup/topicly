@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { ReportButton } from "@/components/report-button";
 import { RichText } from "@/components/rich-text";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -143,6 +144,9 @@ export function ReplyItem({ node, topicLocked, depth, onReplyCreated, onReplyUpd
                     <Trash2 className="h-3.5 w-3.5" />
                     Excluir
                   </button>
+                )}
+                {!node.isDeleted && (
+                  <ReportButton targetType="reply" targetId={node.id} ownerId={node.author.id} variant="inline" />
                 )}
               </div>
             )}

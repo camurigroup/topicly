@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { FollowButton } from "@/components/follow-button";
+import { ReportButton } from "@/components/report-button";
 import { RichText } from "@/components/rich-text";
 import { TopicRow } from "@/components/topic-row";
 import { Button } from "@/components/ui/button";
@@ -89,13 +90,16 @@ export default function ProfilePage() {
               </div>
             </div>
             {!stats.isSelf && (
-              <FollowButton
-                following={stats.isFollowing}
-                onToggle={() => api.followUser(profile.username)}
-                onChange={(res) =>
-                  setState({ kind: "ready", profile, stats: { ...stats, isFollowing: res.following, followers: res.count } })
-                }
-              />
+              <div className="flex items-center gap-1">
+                <ReportButton targetType="user" targetId={profile.id} ownerId={profile.id} />
+                <FollowButton
+                  following={stats.isFollowing}
+                  onToggle={() => api.followUser(profile.username)}
+                  onChange={(res) =>
+                    setState({ kind: "ready", profile, stats: { ...stats, isFollowing: res.following, followers: res.count } })
+                  }
+                />
+              </div>
             )}
           </div>
 
