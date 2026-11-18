@@ -44,4 +44,8 @@ Com Docker: `docker compose up` (sobe api, web e serviços de apoio).
 
 ## Status
 
-Em construção — ver [ROADMAP.md](ROADMAP.md). Etapa atual: **Etapa 1 — Fundação**.
+Em construção — ver [ROADMAP.md](ROADMAP.md).
+
+- ✅ **Etapa 1 — Fundação** (monorepo, API Go, web Next.js, migrations, Docker)
+- ✅ **Etapa 2 — Autenticação e usuários** (registro/login/refresh, perfis, uploads, RBAC base, rate limit) — verificada ponta a ponta
+- 🟡 **Etapa 3 — Fórum**: backend pronto e verificado (categorias/subcategorias, tópicos, respostas, likes, follows). Falta o frontend (navegação de categorias/tópicos/respostas).
