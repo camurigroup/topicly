@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/forum-framework/api/internal/modules/audit"
 	"github.com/forum-framework/api/internal/modules/notification"
 	"github.com/forum-framework/api/internal/modules/rbac"
 	"github.com/forum-framework/api/internal/shared/apperr"
@@ -18,6 +19,20 @@ type Service struct {
 	repo   *Repository
 	rbac   *rbac.Service
 	notify *notification.Service
+	audit  *audit.Service
+}
+
+// SetAuditor enables audit records for moderation actions (editing or
+// deleting someone else's content).
+func (s *Service) SetAuditor(a *audit.Service) { s.audit = a }
+
+// modLog records an action only when performed on someone else's content.
+func (s *Service) modLog(ctx context.Context, actorID, authorID, action, targetType, targetID string, details map[string]any) {
+	if actorID == authorID {
+		return
+	}
+	details["authorId"] = authorID
+	s.audit.Record(ctx, actorID, action, targetType, targetID, details)
 }
 
 // NewService builds a topic Service. notifySvc may be nil (no notifications).
@@ -134,6 +149,7 @@ func (s *Service) UpdateTopic(ctx context.Context, actorID, topicID string, in U
 	if err := s.repo.UpdateTopic(ctx, topicID, title, current.Slug, content); err != nil {
 		return nil, err
 	}
+	s.modLog(ctx, actorID, current.Author.ID, "topic.edit", "topic", topicID, map[string]any{"title": title})
 	return s.repo.GetTopicByID(ctx, topicID)
 }
 
@@ -146,7 +162,15 @@ func (s *Service) DeleteTopic(ctx context.Context, actorID, topicID string) erro
 	if author != actorID && !s.can(ctx, actorID, rbac.PermTopicsDelete) {
 		return apperr.ErrForbidden
 	}
-	return s.repo.DeleteTopic(ctx, topicID)
+	title := ""
+	if t, err := s.repo.GetTopicByID(ctx, topicID); err == nil {
+		title = t.Title
+	}
+	if err := s.repo.DeleteTopic(ctx, topicID); err != nil {
+		return err
+	}
+	s.modLog(ctx, actorID, author, "topic.delete", "topic", topicID, map[string]any{"title": title})
+	return nil
 }
 
 // SetFlag toggles a topic flag (is_pinned, is_locked, is_featured).
@@ -231,6 +255,7 @@ func (s *Service) UpdateReply(ctx context.Context, actorID, replyID string, in U
 	if err := s.repo.UpdateReply(ctx, replyID, content); err != nil {
 		return nil, err
 	}
+	s.modLog(ctx, actorID, current.Author.ID, "reply.edit", "reply", replyID, map[string]any{"topicId": current.TopicID})
 	return s.repo.GetReplyByID(ctx, replyID)
 }
 
@@ -243,7 +268,11 @@ func (s *Service) DeleteReply(ctx context.Context, actorID, replyID string) erro
 	if author != actorID && !s.can(ctx, actorID, rbac.PermRepliesDelete) {
 		return apperr.ErrForbidden
 	}
-	return s.repo.SoftDeleteReply(ctx, replyID, topicID)
+	if err := s.repo.SoftDeleteReply(ctx, replyID, topicID); err != nil {
+		return err
+	}
+	s.modLog(ctx, actorID, author, "reply.delete", "reply", replyID, map[string]any{"topicId": topicID})
+	return nil
 }
 
 // ToggleTopicLike likes or unlikes a topic.
