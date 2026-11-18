@@ -93,13 +93,8 @@ export default function AdminCategoriesPage() {
   }
 
   async function toggleActive(cat: Category) {
-    await api.updateCategory(cat.id, {
-      name: cat.name,
-      description: cat.description,
-      icon: cat.icon,
-      position: cat.position,
-      isActive: !cat.isActive,
-    });
+    // PATCH: only the flag changes; everything else is kept by the API.
+    await api.updateCategory(cat.id, { isActive: !cat.isActive });
     await load();
   }
 

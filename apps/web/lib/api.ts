@@ -558,7 +558,8 @@ export const api = {
 
   updateCategory: (
     id: string,
-    input: { name: string; description?: string | null; icon?: string | null; position?: number; isActive?: boolean },
+    /** Partial update: omitted fields are kept; "" clears optional texts. */
+    input: { name?: string; description?: string; icon?: string; coverUrl?: string; position?: number; isActive?: boolean },
   ) => raw<Category>(`/api/v1/categories/${id}`, { method: "PATCH", body: input, auth: true }),
 
   deleteCategory: (id: string) =>
