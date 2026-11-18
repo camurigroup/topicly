@@ -23,8 +23,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (loading || !user) return <>{children}</>;
 
   return (
-    <div className="-mt-4 grid gap-8 lg:grid-cols-[220px_1fr]">
-      <aside className="lg:sticky lg:top-24 lg:self-start">
+    <div className="-mt-4 grid grid-cols-1 gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+      <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
         <p className="mb-3 hidden text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground lg:block">
           Painel
         </p>
