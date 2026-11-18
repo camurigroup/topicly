@@ -38,23 +38,45 @@ func (s *Service) Account(ctx context.Context, id string) (*Account, error) {
 	return &a, nil
 }
 
-// UpdateProfile validates and persists editable profile fields.
+// UpdateProfile applies a partial update to the editable profile fields.
+// Avatar and banner are untouched (they have their own upload endpoints).
 func (s *Service) UpdateProfile(ctx context.Context, id string, in UpdateProfileInput) (*Account, error) {
-	displayName := strings.TrimSpace(in.DisplayName)
-	if err := validate.DisplayName(displayName); err != nil {
-		return nil, validationErr(err)
+	current, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
 	}
-	if in.Bio != nil {
-		trimmed := strings.TrimSpace(*in.Bio)
-		if len([]rune(trimmed)) > 500 {
-			return nil, validationErr(errors.New("a bio deve ter no máximo 500 caracteres"))
-		}
-		in.Bio = &trimmed
+	displayName, bio, err := mergeProfile(current, in)
+	if err != nil {
+		return nil, err
 	}
-	if err := s.repo.UpdateProfile(ctx, id, displayName, in.Bio, in.AvatarURL, in.BannerURL); err != nil {
+	if err := s.repo.UpdateProfile(ctx, id, displayName, bio); err != nil {
 		return nil, err
 	}
 	return s.Account(ctx, id)
+}
+
+// mergeProfile resolves the new display name and bio: omitted fields keep the
+// current value, an empty bio clears it.
+func mergeProfile(current *User, in UpdateProfileInput) (string, *string, error) {
+	displayName := current.DisplayName
+	if in.DisplayName != nil {
+		displayName = strings.TrimSpace(*in.DisplayName)
+		if err := validate.DisplayName(displayName); err != nil {
+			return "", nil, validationErr(err)
+		}
+	}
+	bio := current.Bio
+	if in.Bio != nil {
+		trimmed := strings.TrimSpace(*in.Bio)
+		if len([]rune(trimmed)) > 500 {
+			return "", nil, validationErr(errors.New("a bio deve ter no máximo 500 caracteres"))
+		}
+		bio = nil
+		if trimmed != "" {
+			bio = &trimmed
+		}
+	}
+	return displayName, bio, nil
 }
 
 // ChangePassword verifies the current password and sets a new one.

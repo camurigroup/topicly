@@ -125,9 +125,9 @@ func (r *Repository) ExistsByEmail(ctx context.Context, email string) (bool, err
 }
 
 // UpdateProfile updates editable profile fields.
-func (r *Repository) UpdateProfile(ctx context.Context, id, displayName string, bio, avatarURL, bannerURL *string) error {
-	q := r.store.Rebind(`UPDATE users SET display_name = ?, bio = ?, avatar_url = ?, banner_url = ?, updated_at = ? WHERE id = ?`)
-	res, err := r.store.DB.ExecContext(ctx, q, displayName, bio, avatarURL, bannerURL, time.Now().UTC(), id)
+func (r *Repository) UpdateProfile(ctx context.Context, id, displayName string, bio *string) error {
+	q := r.store.Rebind(`UPDATE users SET display_name = ?, bio = ?, updated_at = ? WHERE id = ?`)
+	res, err := r.store.DB.ExecContext(ctx, q, displayName, bio, time.Now().UTC(), id)
 	return affected(res, err)
 }
 

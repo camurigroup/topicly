@@ -1,11 +1,11 @@
 package user
 
-// UpdateProfileInput carries editable profile fields.
+// UpdateProfileInput is a partial update (PATCH): omitted fields are kept,
+// an empty bio clears it. Avatar and banner are changed only through the
+// upload endpoints, which validate the file.
 type UpdateProfileInput struct {
-	DisplayName string  `json:"displayName"`
+	DisplayName *string `json:"displayName"`
 	Bio         *string `json:"bio"`
-	AvatarURL   *string `json:"avatarUrl"`
-	BannerURL   *string `json:"bannerUrl"`
 }
 
 // ChangePasswordInput carries a password change request.
