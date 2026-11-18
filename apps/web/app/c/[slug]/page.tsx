@@ -6,9 +6,11 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { FollowButton } from "@/components/follow-button";
 import { TopicRow } from "@/components/topic-row";
 import { Button } from "@/components/ui/button";
-import { api, type Category, type Topic } from "@/lib/api";
+import { api, type Category, type CategoryStats, type Topic } from "@/lib/api";
+import { formatCount } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
 
@@ -17,6 +19,7 @@ export default function CategoryPage() {
   const { user } = useAuth();
 
   const [category, setCategory] = useState<Category | null>(null);
+  const [stats, setStats] = useState<CategoryStats | null>(null);
   const [subcategories, setSubcategories] = useState<Category[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [total, setTotal] = useState(0);
@@ -28,12 +31,14 @@ export default function CategoryPage() {
     setLoading(true);
     setError(null);
     try {
-      const [{ data: cat }, { data: all }, topicPage] = await Promise.all([
+      const [{ data: cat }, { data: all }, topicPage, { data: catStats }] = await Promise.all([
         api.category(slug),
         api.categories(),
         api.topics({ category: slug, page, limit: PAGE_SIZE }),
+        api.categoryStats(slug),
       ]);
       setCategory(cat);
+      setStats(catStats);
       setSubcategories(all.filter((c) => c.parentId === cat.id));
       setTopics(topicPage.items);
       setTotal(topicPage.meta.total);
@@ -81,15 +86,31 @@ export default function CategoryPage() {
           </h1>
           {category.description && <p className="mt-1 text-muted-foreground">{category.description}</p>}
         </div>
-        {user && (
-          <Button asChild>
-            <Link href={`/c/${category.slug}/new`}>
-              <Plus className="h-4 w-4" />
-              Novo tópico
-            </Link>
-          </Button>
-        )}
+        <div className="flex shrink-0 items-start gap-2">
+          {stats && (
+            <FollowButton
+              following={stats.isFollowing}
+              onToggle={() => api.followCategory(category.slug)}
+              onChange={(res) => setStats({ ...stats, isFollowing: res.following, followers: res.count })}
+            />
+          )}
+          {user && (
+            <Button size="sm" asChild>
+              <Link href={`/c/${category.slug}/new`}>
+                <Plus className="h-4 w-4" />
+                Novo tópico
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
+
+      {stats && (
+        <p className="-mt-3 text-sm text-muted-foreground">
+          {formatCount(stats.followers)} seguidor{stats.followers === 1 ? "" : "es"} · {formatCount(stats.topics)}{" "}
+          tópico{stats.topics === 1 ? "" : "s"}
+        </p>
+      )}
 
       {subcategories.length > 0 && (
         <ul className="flex flex-wrap gap-2">
