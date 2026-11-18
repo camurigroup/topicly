@@ -2,9 +2,10 @@
 
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { ProfileMedia } from "@/components/profile-media";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { api, type Account } from "@/lib/api";
 
 export default function SettingsPage() {
-  const { user, loading, setAccount, refresh } = useAuth();
+  const { user, loading, setAccount } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -31,10 +32,10 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
       <ProfileSection
+        account={user}
         initialDisplayName={user.displayName}
         initialBio={user.bio ?? ""}
         onSaved={setAccount}
-        onAvatar={() => void refresh()}
       />
       <PasswordSection />
       <EmailSection onSaved={setAccount} />
@@ -48,21 +49,20 @@ function Feedback({ msg }: { msg: { ok: boolean; text: string } | null }) {
 }
 
 function ProfileSection({
+  account,
   initialDisplayName,
   initialBio,
   onSaved,
-  onAvatar,
 }: {
+  account: Account;
   initialDisplayName: string;
   initialBio: string;
   onSaved: (a: Account) => void;
-  onAvatar: () => void;
 }) {
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [bio, setBio] = useState(initialBio);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -79,25 +79,15 @@ function ProfileSection({
     }
   }
 
-  async function uploadAvatar(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setMsg(null);
-    try {
-      await api.uploadAvatar(file);
-      onAvatar();
-      setMsg({ ok: true, text: "Avatar atualizado." });
-    } catch (err) {
-      setMsg({ ok: false, text: err instanceof Error ? err.message : "falha no upload" });
-    }
-  }
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>Perfil</CardTitle>
       </CardHeader>
       <CardContent>
+        <div className="mb-12">
+          <ProfileMedia account={account} onUpdated={onSaved} />
+        </div>
         <form onSubmit={save} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="displayName">Nome de exibição</Label>
@@ -113,13 +103,6 @@ function ProfileSection({
               maxLength={500}
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
-          </div>
-          <div className="space-y-2">
-            <Label>Avatar</Label>
-            <input ref={fileRef} type="file" accept="image/*" onChange={uploadAvatar} className="hidden" />
-            <Button type="button" variant="outline" onClick={() => fileRef.current?.click()}>
-              Enviar imagem
-            </Button>
           </div>
           <Feedback msg={msg} />
           <Button type="submit" disabled={busy}>

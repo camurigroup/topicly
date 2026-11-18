@@ -526,6 +526,12 @@ export const api = {
     return raw<Account>("/api/v1/me/avatar", { method: "POST", body: form, auth: true, isForm: true });
   },
 
+  uploadBanner: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return raw<Account>("/api/v1/me/banner", { method: "POST", body: form, auth: true, isForm: true });
+  },
+
   /* ------------------------------- categories ----------------------------- */
 
   categories: async () => {
