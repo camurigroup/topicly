@@ -103,7 +103,7 @@ func (r *Repository) ListTopics(ctx context.Context, categoryID string, limit, o
 		return nil, err
 	}
 	defer rows.Close()
-	var out []Topic
+	out := []Topic{}
 	for rows.Next() {
 		t, err := scanTopic(rows)
 		if err != nil {

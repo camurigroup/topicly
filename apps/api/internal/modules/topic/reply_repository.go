@@ -95,7 +95,7 @@ func (r *Repository) ListReplies(ctx context.Context, topicID string, limit, off
 		return nil, err
 	}
 	defer rows.Close()
-	var out []Reply
+	out := []Reply{}
 	for rows.Next() {
 		rp, err := scanReply(rows)
 		if err != nil {

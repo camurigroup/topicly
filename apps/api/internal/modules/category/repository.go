@@ -108,7 +108,7 @@ func (r *Repository) List(ctx context.Context, activeOnly bool) ([]Category, err
 	}
 	defer rows.Close()
 
-	var out []Category
+	out := []Category{}
 	for rows.Next() {
 		c, err := scan(rows)
 		if err != nil {
