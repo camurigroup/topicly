@@ -5,27 +5,24 @@ import (
 	"strings"
 	"unicode"
 
-	"golang.org/x/text/runes"
-	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
 )
 
-var accentRemover = transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
-
-// Make converts text into a lowercase, ASCII, hyphen-separated slug.
+// Make converts text into a lowercase, ASCII, hyphen-separated slug. Accented
+// letters are folded to their base form (e.g. "Anúncios" -> "anuncios").
 func Make(text string) string {
-	normalized, _, err := transform.String(accentRemover, text)
-	if err != nil {
-		normalized = text
-	}
-	normalized = strings.ToLower(normalized)
+	decomposed := norm.NFD.String(text)
 
 	var b strings.Builder
 	lastHyphen := false
-	for _, r := range normalized {
+	for _, r := range decomposed {
+		if unicode.Is(unicode.Mn, r) {
+			continue // drop combining marks (accents)
+		}
+		lr := unicode.ToLower(r)
 		switch {
-		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
-			b.WriteRune(r)
+		case (lr >= 'a' && lr <= 'z') || (lr >= '0' && lr <= '9'):
+			b.WriteRune(lr)
 			lastHyphen = false
 		default:
 			if !lastHyphen && b.Len() > 0 {
