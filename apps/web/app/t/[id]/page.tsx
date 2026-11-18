@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
 import { ReplyForm, ReplyItem, type ReplyNode } from "@/components/reply-item";
+import { RichText } from "@/components/rich-text";
 import { Button } from "@/components/ui/button";
 import { api, type Reply, type Topic } from "@/lib/api";
 import { cn, formatCount, timeAgo } from "@/lib/utils";
@@ -54,6 +55,12 @@ export default function TopicPage() {
   }, [load]);
 
   const tree = useMemo(() => buildTree(replies), [replies]);
+
+  // Notification links point at #reply-<id>; scroll there once replies render.
+  useEffect(() => {
+    if (loading || !window.location.hash.startsWith("#reply-")) return;
+    document.getElementById(window.location.hash.slice(1))?.scrollIntoView({ block: "center" });
+  }, [loading]);
 
   async function toggleLike() {
     if (!topic || !user || busy) return;
@@ -155,7 +162,7 @@ export default function TopicPage() {
           </span>
         </p>
 
-        <div className="mt-4 whitespace-pre-wrap text-sm leading-relaxed">{topic.content}</div>
+        <RichText text={topic.content} className="mt-4 text-sm leading-relaxed" />
 
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
           <Button

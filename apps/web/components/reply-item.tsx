@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { RichText } from "@/components/rich-text";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { api, type Reply } from "@/lib/api";
@@ -62,7 +63,10 @@ export function ReplyItem({ node, topicLocked, depth, onReplyCreated, onReplyUpd
 
   return (
     <div className={cn(depth > 0 && "ml-4 border-l border-border pl-4 sm:ml-6 sm:pl-5")}>
-      <div className="rounded-lg border border-border bg-card p-4 text-card-foreground">
+      <div
+        id={`reply-${node.id}`}
+        className="scroll-mt-24 rounded-lg border border-border bg-card p-4 text-card-foreground target:ring-2 target:ring-primary"
+      >
         {node.isDeleted ? (
           <p className="text-sm italic text-muted-foreground">resposta removida</p>
         ) : (
@@ -92,7 +96,7 @@ export function ReplyItem({ node, topicLocked, depth, onReplyCreated, onReplyUpd
                 }}
               />
             ) : (
-              <p className="whitespace-pre-wrap text-sm">{node.content}</p>
+              <RichText text={node.content} className="text-sm" />
             )}
 
             {!editing && (
