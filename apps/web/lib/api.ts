@@ -251,6 +251,245 @@ export interface Page<T> {
   meta: ApiMeta;
 }
 
+/* ------------------------------ social types ----------------------------- */
+
+export interface UserSummary {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  reputation: number;
+}
+
+export interface UserStats {
+  followers: number;
+  following: number;
+  followedCategories: number;
+  topics: number;
+  replies: number;
+  isFollowing: boolean;
+  isSelf: boolean;
+}
+
+export interface CategoryStats {
+  followers: number;
+  topics: number;
+  isFollowing: boolean;
+}
+
+export interface FollowResult {
+  following: boolean;
+  count: number;
+}
+
+/* --------------------------- notification types -------------------------- */
+
+export type NotificationType =
+  | "follow"
+  | "topic_like"
+  | "reply_like"
+  | "reply"
+  | "followed_reply"
+  | "mention"
+  | "new_topic"
+  | "punishment"
+  | "admin";
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  actor: Author | null;
+  entityType: string | null;
+  entityId: string | null;
+  message: string;
+  link: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface StreamEvent {
+  kind: "notification" | "sync";
+  notification?: AppNotification;
+  unread: number;
+}
+
+/* ----------------------------- search types ------------------------------ */
+
+export type SearchType = "all" | "topics" | "replies" | "users" | "categories";
+export type SearchSort = "relevance" | "recent" | "popular" | "replies" | "likes" | "activity";
+
+export interface SearchParams {
+  q?: string;
+  type?: SearchType;
+  category?: string;
+  author?: string;
+  from?: string;
+  to?: string;
+  minReplies?: number;
+  minLikes?: number;
+  sort?: SearchSort;
+  page?: number;
+  limit?: number;
+}
+
+export interface ReplyHit extends Reply {
+  topicTitle: string;
+  categorySlug: string;
+}
+
+export interface Section<T> {
+  items: T[];
+  total: number;
+}
+
+export interface SearchResult {
+  query: string;
+  type: SearchType;
+  topics?: Section<Topic>;
+  replies?: Section<ReplyHit>;
+  users?: Section<UserSummary>;
+  categories?: Section<Category>;
+}
+
+/* ------------------------------ home / site ------------------------------ */
+
+export type DiscoverSection = "recent" | "popular" | "trending";
+
+export interface SiteStats {
+  users: number;
+  topics: number;
+  replies: number;
+  categories: number;
+  likes: number;
+}
+
+export interface FeaturedUser {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  reputation: number;
+  followers: number;
+  topics: number;
+}
+
+export interface Activity {
+  kind: "topic" | "reply";
+  id: string;
+  topicId: string;
+  topicTitle: string;
+  actor: { username: string; displayName: string; avatarUrl: string | null };
+  createdAt: string;
+}
+
+export type SiteSettings = Record<string, string>;
+
+export interface HomeData {
+  settings: SiteSettings;
+  stats?: SiteStats;
+  categories: Category[];
+  featuredTopics: Topic[];
+  recentTopics: Topic[];
+  popularTopics: Topic[];
+  featuredUsers: FeaturedUser[];
+  activity: Activity[];
+}
+
+export interface SettingDefinition {
+  key: string;
+  label: string;
+  group: string;
+  kind: "text" | "longtext" | "bool" | "path" | "url";
+  maxLength: number;
+  default: string;
+}
+
+function query(params: Record<string, string | number | undefined | null>): string {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== null && v !== "" && v !== 0) q.set(k, String(v));
+  }
+  const s = q.toString();
+  return s ? `?${s}` : "";
+}
+
+async function paged<T>(path: string, auth = false): Promise<Page<T>> {
+  const { data, meta } = await raw<T[] | null>(path, { auth });
+  const items = data ?? [];
+  return { items, meta: meta ?? { total: items.length, page: 1, limit: items.length } };
+}
+
+/* ------------------------------ live stream ------------------------------ */
+
+/**
+ * Opens the notifications SSE stream with fetch (so the bearer token travels in
+ * a header, never in the URL) and reconnects with backoff until aborted.
+ */
+export function openNotificationStream(
+  onEvent: (ev: StreamEvent) => void,
+  signal: AbortSignal,
+  onStatus?: (live: boolean) => void,
+): void {
+  let attempt = 0;
+
+  const run = async () => {
+    while (!signal.aborted) {
+      let token = tokens.access();
+      if (!token) return;
+      try {
+        let res = await fetch(`${API_URL}/api/v1/notifications/stream`, {
+          headers: { Authorization: `Bearer ${token}`, Accept: "text/event-stream" },
+          signal,
+        });
+        if (res.status === 401 && (await tryRefresh())) {
+          token = tokens.access();
+          res = await fetch(`${API_URL}/api/v1/notifications/stream`, {
+            headers: { Authorization: `Bearer ${token}`, Accept: "text/event-stream" },
+            signal,
+          });
+        }
+        if (!res.ok || !res.body) throw new Error(`stream ${res.status}`);
+        attempt = 0;
+        onStatus?.(true);
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          let sep: number;
+          while ((sep = buffer.indexOf("\n\n")) !== -1) {
+            const block = buffer.slice(0, sep);
+            buffer = buffer.slice(sep + 2);
+            const data = block
+              .split("\n")
+              .filter((l) => l.startsWith("data:"))
+              .map((l) => l.slice(5).trim())
+              .join("");
+            if (data) {
+              try {
+                onEvent(JSON.parse(data) as StreamEvent);
+              } catch {
+                /* ignore malformed event */
+              }
+            }
+          }
+        }
+      } catch {
+        if (signal.aborted) return;
+      }
+      onStatus?.(false);
+      attempt += 1;
+      const delay = Math.min(30000, 1000 * 2 ** Math.min(attempt, 5));
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  };
+  void run();
+}
+
 /* ------------------------------- API surface ----------------------------- */
 
 export const api = {
@@ -381,4 +620,69 @@ export const api = {
 
   likeReply: (id: string) =>
     raw<ToggleResult>(`/api/v1/replies/${id}/like`, { method: "POST", auth: true }),
+
+  /* --------------------------------- social ------------------------------- */
+
+  followUser: (username: string) =>
+    raw<FollowResult>(`/api/v1/users/${encodeURIComponent(username)}/follow`, { method: "POST", auth: true }),
+
+  userStats: (username: string) =>
+    raw<UserStats>(`/api/v1/users/${encodeURIComponent(username)}/stats`, { auth: true }),
+
+  followers: (username: string, page = 1) =>
+    paged<UserSummary>(`/api/v1/users/${encodeURIComponent(username)}/followers${query({ page })}`),
+
+  following: (username: string, page = 1) =>
+    paged<UserSummary>(`/api/v1/users/${encodeURIComponent(username)}/following${query({ page })}`),
+
+  followCategory: (slug: string) =>
+    raw<FollowResult>(`/api/v1/categories/${encodeURIComponent(slug)}/follow`, { method: "POST", auth: true }),
+
+  categoryStats: (slug: string) =>
+    raw<CategoryStats>(`/api/v1/categories/${encodeURIComponent(slug)}/stats`, { auth: true }),
+
+  /* ----------------------------- notifications ---------------------------- */
+
+  notifications: (params: { page?: number; unread?: boolean } = {}) =>
+    paged<AppNotification>(
+      `/api/v1/notifications${query({ page: params.page, unread: params.unread ? "true" : undefined })}`,
+      true,
+    ),
+
+  unreadCount: () => raw<{ unread: number }>("/api/v1/notifications/unread-count", { auth: true }),
+
+  markNotificationRead: (id: string) =>
+    raw<{ updated: boolean }>(`/api/v1/notifications/${id}/read`, { method: "PUT", auth: true }),
+
+  markAllNotificationsRead: () =>
+    raw<{ updated: number }>("/api/v1/notifications/read-all", { method: "PUT", auth: true }),
+
+  deleteNotification: (id: string) =>
+    raw<{ deleted: boolean }>(`/api/v1/notifications/${id}`, { method: "DELETE", auth: true }),
+
+  broadcast: (input: { message: string; link?: string }) =>
+    raw<{ sent: number }>("/api/v1/admin/notifications", { method: "POST", body: input, auth: true }),
+
+  /* --------------------------- search & discovery ------------------------- */
+
+  search: async (params: SearchParams) => {
+    const { data, meta } = await raw<SearchResult>(
+      `/api/v1/search${query({ ...params } as Record<string, string | number | undefined>)}`,
+      {},
+    );
+    return { data, meta };
+  },
+
+  discover: (section: DiscoverSection, page = 1, limit = 20) =>
+    paged<Topic>(`/api/v1/discover${query({ section, page, limit })}`, true),
+
+  /* ------------------------------ home & site ----------------------------- */
+
+  home: () => raw<HomeData>("/api/v1/home", {}),
+
+  adminSiteSettings: () =>
+    raw<{ definitions: SettingDefinition[]; values: SiteSettings }>("/api/v1/admin/site/settings", { auth: true }),
+
+  updateSiteSettings: (values: SiteSettings) =>
+    raw<SiteSettings>("/api/v1/admin/site/settings", { method: "PUT", body: values, auth: true }),
 };
