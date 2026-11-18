@@ -402,7 +402,7 @@ export interface SettingDefinition {
   key: string;
   label: string;
   group: string;
-  kind: "text" | "longtext" | "bool" | "path" | "url";
+  kind: "text" | "longtext" | "bool" | "path" | "url" | "color" | "links";
   maxLength: number;
   default: string;
 }

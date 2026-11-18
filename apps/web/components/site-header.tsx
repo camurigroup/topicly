@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useModerationSections } from "@/components/moderation-nav";
 import { useNotifications } from "@/components/notifications-provider";
+import { useSiteSettings } from "@/components/site-settings-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ export function SiteHeader() {
   const { user, loading, logout } = useAuth();
   const { unread } = useNotifications();
   const modSections = useModerationSections();
+  const { settings, brand } = useSiteSettings();
   const router = useRouter();
   const [q, setQ] = useState("");
 
@@ -35,8 +37,13 @@ export function SiteHeader() {
       <div className="container flex h-16 items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-4">
           <Link href="/" className="flex items-center gap-2 font-semibold">
-            <MessagesSquare className="h-5 w-5 text-primary" />
-            <span>Forum</span>
+            {settings["brand.logo"] ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={settings["brand.logo"]} alt="" className="h-7 w-7 rounded object-contain" />
+            ) : (
+              <MessagesSquare className="h-5 w-5 text-primary" />
+            )}
+            <span className="max-w-[10rem] truncate">{brand}</span>
           </Link>
           <nav className="hidden items-center gap-4 sm:flex">
             <Link href="/categories" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
