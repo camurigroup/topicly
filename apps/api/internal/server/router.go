@@ -11,17 +11,17 @@ import (
 func (s *Server) routes() http.Handler {
 	root := http.NewServeMux()
 
-	// Infra endpoints (outside the versioned API).
 	root.HandleFunc("GET /health", s.health.Live)
 	root.HandleFunc("GET /ready", s.health.Ready)
-
-	// Serve uploaded files when using the local storage provider.
 	if fs, ok := s.fileServer(); ok {
 		root.Handle("GET /files/", fs)
 	}
 
 	api := http.NewServeMux()
 	api.HandleFunc("GET /ping", s.health.Ping)
+
+	auth := s.authMW.RequireAuth
+	optional := s.authMW.OptionalAuth
 
 	// Auth (public, rate-limited).
 	limit := s.authLimiter.Limit
@@ -33,8 +33,7 @@ func (s *Server) routes() http.Handler {
 	// Public profiles.
 	api.HandleFunc("GET /users/{username}", s.user.PublicProfile)
 
-	// Authenticated account endpoints.
-	auth := s.authMW.RequireAuth
+	// Account endpoints.
 	api.Handle("GET /me", auth(http.HandlerFunc(s.user.Me)))
 	api.Handle("PATCH /me", auth(http.HandlerFunc(s.user.UpdateProfile)))
 	api.Handle("PUT /me/password", auth(http.HandlerFunc(s.user.ChangePassword)))
@@ -42,13 +41,32 @@ func (s *Server) routes() http.Handler {
 	api.Handle("POST /me/avatar", auth(http.HandlerFunc(s.user.UploadAvatar)))
 	api.Handle("POST /me/banner", auth(http.HandlerFunc(s.user.UploadBanner)))
 
-	// Categories: public reads, permission-gated writes.
+	// Categories.
 	api.HandleFunc("GET /categories", s.category.List)
 	api.HandleFunc("GET /categories/{slug}", s.category.GetBySlug)
 	api.Handle("GET /admin/categories", s.perm(rbac.PermCategoriesManage, s.category.ListAll))
 	api.Handle("POST /categories", s.perm(rbac.PermCategoriesManage, s.category.Create))
 	api.Handle("PATCH /categories/{id}", s.perm(rbac.PermCategoriesManage, s.category.Update))
 	api.Handle("DELETE /categories/{id}", s.perm(rbac.PermCategoriesManage, s.category.Delete))
+
+	// Topics (reads use optional auth to enrich viewer flags).
+	api.Handle("GET /topics", optional(http.HandlerFunc(s.topic.ListTopics)))
+	api.Handle("GET /topics/{id}", optional(http.HandlerFunc(s.topic.GetTopic)))
+	api.Handle("POST /topics", auth(http.HandlerFunc(s.topic.CreateTopic)))
+	api.Handle("PATCH /topics/{id}", auth(http.HandlerFunc(s.topic.UpdateTopic)))
+	api.Handle("DELETE /topics/{id}", auth(http.HandlerFunc(s.topic.DeleteTopic)))
+	api.Handle("POST /topics/{id}/like", auth(http.HandlerFunc(s.topic.LikeTopic)))
+	api.Handle("POST /topics/{id}/follow", auth(http.HandlerFunc(s.topic.FollowTopic)))
+	api.Handle("PUT /topics/{id}/pin", s.perm(rbac.PermTopicsPin, s.topic.Pin))
+	api.Handle("PUT /topics/{id}/lock", s.perm(rbac.PermTopicsLock, s.topic.Lock))
+	api.Handle("PUT /topics/{id}/feature", s.perm(rbac.PermTopicsPin, s.topic.Feature))
+
+	// Replies.
+	api.Handle("GET /topics/{id}/replies", optional(http.HandlerFunc(s.topic.ListReplies)))
+	api.Handle("POST /topics/{id}/replies", auth(http.HandlerFunc(s.topic.CreateReply)))
+	api.Handle("PATCH /replies/{id}", auth(http.HandlerFunc(s.topic.UpdateReply)))
+	api.Handle("DELETE /replies/{id}", auth(http.HandlerFunc(s.topic.DeleteReply)))
+	api.Handle("POST /replies/{id}/like", auth(http.HandlerFunc(s.topic.LikeReply)))
 
 	root.Handle("/api/v1/", http.StripPrefix("/api/v1", api))
 

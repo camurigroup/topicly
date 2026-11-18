@@ -62,3 +62,17 @@ func (m *Middleware) RequirePermission(slug string) func(http.Handler) http.Hand
 		})
 	}
 }
+
+// OptionalAuth sets the principal when a valid token is present but never
+// rejects the request. Used on public reads that enrich output for logged-in users.
+func (m *Middleware) OptionalAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if token := httpx.BearerToken(r); token != "" {
+			if claims, err := security.ParseAccessToken(m.secret, token); err == nil {
+				ctx := authctx.With(r.Context(), authctx.Principal{UserID: claims.Subject, Username: claims.Username})
+				r = r.WithContext(ctx)
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}

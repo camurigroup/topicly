@@ -14,6 +14,7 @@ import (
 	"github.com/forum-framework/api/internal/modules/category"
 	"github.com/forum-framework/api/internal/modules/health"
 	"github.com/forum-framework/api/internal/modules/rbac"
+	"github.com/forum-framework/api/internal/modules/topic"
 	"github.com/forum-framework/api/internal/modules/user"
 	"github.com/forum-framework/api/internal/storage"
 )
@@ -31,6 +32,7 @@ type Server struct {
 	authLimiter *middleware.RateLimiter
 	user        *user.Handler
 	category    *category.Handler
+	topic       *topic.Handler
 	rbac        *rbac.Service
 }
 
@@ -47,10 +49,12 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 	rbacRepo := rbac.NewRepository(store)
 	tokenRepo := auth.NewRefreshTokenRepository(store)
 	categoryRepo := category.NewRepository(store)
+	topicRepo := topic.NewRepository(store)
 
 	rbacSvc := rbac.NewService(rbacRepo)
 	userSvc := user.NewService(userRepo)
 	categorySvc := category.NewService(categoryRepo)
+	topicSvc := topic.NewService(topicRepo, rbacSvc)
 	authSvc := auth.NewService(userRepo, tokenRepo, rbacSvc, auth.Config{
 		AccessSecret: cfg.JWTAccessSecret,
 		AccessTTL:    cfg.JWTAccessTTL,
@@ -68,6 +72,7 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 		authLimiter: middleware.NewRateLimiter(20, time.Minute),
 		user:        user.NewHandler(userSvc, rbacSvc, fileStore),
 		category:    category.NewHandler(categorySvc),
+		topic:       topic.NewHandler(topicSvc),
 		rbac:        rbacSvc,
 	}, nil
 }
