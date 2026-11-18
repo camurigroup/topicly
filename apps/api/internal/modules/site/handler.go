@@ -7,7 +7,8 @@ import (
 	"github.com/forum-framework/api/internal/shared/response"
 )
 
-const maxBody = 1 << 16
+// maxBody fits every setting at its maximum length (legal texts included).
+const maxBody = 1 << 18
 
 // Handler exposes the home page and site settings endpoints.
 type Handler struct {
