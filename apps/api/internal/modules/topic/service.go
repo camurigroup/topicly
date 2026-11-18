@@ -301,3 +301,14 @@ type validationError struct{ msg string }
 
 func (e *validationError) Error() string { return e.msg }
 func (e *validationError) Unwrap() error { return apperr.ErrValidation }
+
+// Discover returns a page of topics for a discovery section
+// (recent, popular or trending).
+func (s *Service) Discover(ctx context.Context, section string, limit, offset int) ([]Topic, int64, error) {
+	switch section {
+	case DiscoverRecent, DiscoverPopular, DiscoverTrending:
+	default:
+		return nil, 0, validationErr("seção inválida (use recent, popular ou trending)")
+	}
+	return s.repo.Discover(ctx, section, limit, offset)
+}

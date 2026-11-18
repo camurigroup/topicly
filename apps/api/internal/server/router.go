@@ -57,6 +57,7 @@ func (s *Server) routes() http.Handler {
 	api.Handle("DELETE /topics/{id}", auth(http.HandlerFunc(s.topic.DeleteTopic)))
 	api.Handle("POST /topics/{id}/like", auth(http.HandlerFunc(s.topic.LikeTopic)))
 	api.Handle("POST /topics/{id}/follow", auth(http.HandlerFunc(s.topic.FollowTopic)))
+	api.HandleFunc("GET /discover", s.topic.Discover)
 	api.Handle("PUT /topics/{id}/pin", s.perm(rbac.PermTopicsPin, s.topic.Pin))
 	api.Handle("PUT /topics/{id}/lock", s.perm(rbac.PermTopicsLock, s.topic.Lock))
 	api.Handle("PUT /topics/{id}/feature", s.perm(rbac.PermTopicsPin, s.topic.Feature))

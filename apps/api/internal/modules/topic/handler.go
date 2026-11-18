@@ -240,3 +240,18 @@ func (h *Handler) LikeReply(w http.ResponseWriter, r *http.Request) {
 	}
 	writeToggle(w, liked, count, "liked")
 }
+
+// Discover handles GET /discover?section=recent|popular|trending&page=&limit=.
+func (h *Handler) Discover(w http.ResponseWriter, r *http.Request) {
+	p := httpx.Paginate(r, 20, 50)
+	section := r.URL.Query().Get("section")
+	if section == "" {
+		section = DiscoverTrending
+	}
+	topics, total, err := h.svc.Discover(r.Context(), section, p.Limit, p.Offset)
+	if err != nil {
+		httpx.WriteError(w, err)
+		return
+	}
+	response.Paginated(w, topics, response.Meta{Total: total, Page: p.Page, Limit: p.Limit})
+}
