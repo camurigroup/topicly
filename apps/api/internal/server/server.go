@@ -10,9 +10,11 @@ import (
 	"github.com/forum-framework/api/internal/config"
 	"github.com/forum-framework/api/internal/database"
 	"github.com/forum-framework/api/internal/middleware"
+	"github.com/forum-framework/api/internal/modules/audit"
 	"github.com/forum-framework/api/internal/modules/auth"
 	"github.com/forum-framework/api/internal/modules/category"
 	"github.com/forum-framework/api/internal/modules/health"
+	"github.com/forum-framework/api/internal/modules/moderation"
 	"github.com/forum-framework/api/internal/modules/notification"
 	"github.com/forum-framework/api/internal/modules/rbac"
 	"github.com/forum-framework/api/internal/modules/search"
@@ -43,6 +45,11 @@ type Server struct {
 	site        *site.Handler
 	siteSvc     *site.Service
 	rbac        *rbac.Service
+	rbacAdmin   *rbac.AdminHandler
+	moderation  *moderation.Handler
+	audit       *audit.Handler
+	auditSvc    *audit.Service
+	reportLimit *middleware.RateLimiter
 }
 
 // New builds the Server and all module dependencies for the given dialect.
@@ -73,6 +80,29 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 		AccessTTL:    cfg.JWTAccessTTL,
 		RefreshTTL:   cfg.JWTRefreshTTL,
 	})
+	authMW := auth.NewMiddleware(cfg.JWTAccessSecret, rbacSvc)
+
+	// Audit + moderation (Etapa 5).
+	auditSvc := audit.NewService(audit.NewRepository(store), logger)
+	rbacSvc.SetAuditor(auditSvc)
+	topicSvc.SetAuditor(auditSvc)
+	modSvc := moderation.NewService(moderation.NewRepository(store), rbacSvc, auditSvc, notifySvc, authSvc.RevokeAllSessions)
+	banCheck := func(ctx context.Context, userID string) (string, bool, error) {
+		s, err := modSvc.Restriction(ctx, userID, moderation.TypeBan)
+		if err != nil || s == nil {
+			return "", false, err
+		}
+		return moderation.Describe(s), true, nil
+	}
+	authSvc.SetBanCheck(banCheck)
+	authMW.SetBanCheck(banCheck)
+	lookupUser := func(ctx context.Context, username string) (string, error) {
+		u, err := userRepo.GetByUsername(ctx, username)
+		if err != nil {
+			return "", err
+		}
+		return u.ID, nil
+	}
 
 	return &Server{
 		cfg:         cfg,
@@ -81,7 +111,7 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 		storage:     fileStore,
 		health:      health.New(db),
 		auth:        auth.NewHandler(authSvc),
-		authMW:      auth.NewMiddleware(cfg.JWTAccessSecret, rbacSvc),
+		authMW:      authMW,
 		authLimiter: middleware.NewRateLimiter(20, time.Minute),
 		user:        user.NewHandler(userSvc, rbacSvc, fileStore),
 		category:    category.NewHandler(categorySvc),
@@ -92,6 +122,11 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 		site:        site.NewHandler(siteSvc),
 		siteSvc:     siteSvc,
 		rbac:        rbacSvc,
+		rbacAdmin:   rbac.NewAdminHandler(rbacSvc, lookupUser),
+		moderation:  moderation.NewHandler(modSvc),
+		audit:       audit.NewHandler(auditSvc),
+		auditSvc:    auditSvc,
+		reportLimit: middleware.NewRateLimiter(10, time.Minute),
 	}, nil
 }
 
