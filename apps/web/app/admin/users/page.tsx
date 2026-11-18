@@ -56,6 +56,7 @@ function UserModerationView() {
     } catch (err) {
       setData(null);
       setError(err instanceof Error ? err.message : "usuário não encontrado");
+      return;
     } finally {
       setLoading(false);
     }
@@ -89,14 +90,14 @@ function UserModerationView() {
         <Button type="submit">Buscar</Button>
       </form>
 
-      {loading && (
+      {loading && !data && (
         <div className="flex justify-center py-12 text-muted-foreground">
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       )}
       {error && !loading && <p role="alert" className="text-sm text-destructive">{error}</p>}
 
-      {data && !loading && (
+      {data && (
         <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
           <div className="space-y-6">
             <section className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-card p-5">
