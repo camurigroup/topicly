@@ -97,6 +97,7 @@ func (s *Server) routes() http.Handler {
 	api.Handle("POST /admin/notifications", s.audited("notification.broadcast", "site", s.perm(rbac.PermSettingsManage, s.notify.Broadcast)))
 
 	s.moderationRoutes(api)
+	s.adminRoutes(api)
 
 	root.Handle("/api/v1/", http.StripPrefix("/api/v1", api))
 
@@ -141,6 +142,22 @@ func (s *Server) moderationRoutes(api *http.ServeMux) {
 
 	api.Handle("GET /admin/audit", s.perm(rbac.PermLogsView, s.audit.List))
 	api.Handle("GET /admin/audit/actions", s.perm(rbac.PermLogsView, s.audit.Actions))
+}
+
+// adminRoutes registers the admin panel: metrics, listings, storage and brand
+// assets (Etapa 6).
+func (s *Server) adminRoutes(api *http.ServeMux) {
+	a := s.admin
+	api.Handle("GET /admin/metrics", s.perm(rbac.PermMetricsView, a.Metrics))
+	api.Handle("GET /admin/metrics/series", s.perm(rbac.PermMetricsView, a.Series))
+	api.Handle("GET /admin/users", s.anyPerm(a.Users,
+		rbac.PermUsersManage, rbac.PermUsersBan, rbac.PermUsersMute, rbac.PermWarningsApply, rbac.PermRolesManage))
+	api.Handle("GET /admin/topics", s.anyPerm(a.Topics,
+		rbac.PermTopicsEdit, rbac.PermTopicsDelete, rbac.PermTopicsLock, rbac.PermTopicsPin))
+	api.Handle("GET /admin/replies", s.anyPerm(a.Replies, rbac.PermRepliesEdit, rbac.PermRepliesDelete))
+	api.Handle("GET /admin/warnings", s.anyPerm(a.Warnings, rbac.PermWarningsApply, rbac.PermUsersBan, rbac.PermUsersMute))
+	api.Handle("GET /admin/storage", s.perm(rbac.PermStorageManage, a.Storage))
+	api.Handle("POST /admin/site/assets", s.audited("site.asset", "site", s.perm(rbac.PermSettingsManage, a.UploadAsset)))
 }
 
 // perm composes RequireAuth + RequirePermission around a handler func.

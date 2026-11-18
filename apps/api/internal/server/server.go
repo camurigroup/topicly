@@ -10,6 +10,7 @@ import (
 	"github.com/forum-framework/api/internal/config"
 	"github.com/forum-framework/api/internal/database"
 	"github.com/forum-framework/api/internal/middleware"
+	"github.com/forum-framework/api/internal/modules/admin"
 	"github.com/forum-framework/api/internal/modules/audit"
 	"github.com/forum-framework/api/internal/modules/auth"
 	"github.com/forum-framework/api/internal/modules/category"
@@ -50,6 +51,7 @@ type Server struct {
 	audit       *audit.Handler
 	auditSvc    *audit.Service
 	reportLimit *middleware.RateLimiter
+	admin       *admin.Handler
 }
 
 // New builds the Server and all module dependencies for the given dialect.
@@ -127,6 +129,7 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 		audit:       audit.NewHandler(auditSvc),
 		auditSvc:    auditSvc,
 		reportLimit: middleware.NewRateLimiter(10, time.Minute),
+		admin:       admin.NewHandler(admin.NewService(admin.NewRepository(store), cfg.Storage), fileStore),
 	}, nil
 }
 
