@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity as ActivityIcon, Folder, Heart, Loader2, MessageSquare, MessagesSquare, Sparkles, Users } from "lucide-react";
+import { Activity as ActivityIcon, Folder, Heart, Loader2, MessageSquare, MessagesSquare, Settings2, Sparkles, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -14,7 +14,7 @@ import { formatCount, timeAgo } from "@/lib/utils";
 type State = { kind: "loading" } | { kind: "ready"; home: HomeData } | { kind: "error"; message: string };
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const [state, setState] = useState<State>({ kind: "loading" });
 
   useEffect(() => {
@@ -57,6 +57,14 @@ export default function HomePage() {
             : undefined
         }
       >
+        {hasPermission("settings.manage") && (
+          <Button variant="outline" size="sm" className="absolute right-4 top-4" asChild>
+            <Link href="/admin/home">
+              <Settings2 className="h-4 w-4" />
+              Personalizar
+            </Link>
+          </Button>
+        )}
         <div className="max-w-2xl space-y-4">
           {welcome && <p className="text-sm font-medium text-primary">{welcome}</p>}
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{s["home.banner.title"]}</h1>
