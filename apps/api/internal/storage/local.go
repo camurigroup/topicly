@@ -55,8 +55,14 @@ func (p *localProvider) Delete(_ context.Context, key string) error {
 	return err
 }
 
+// PublicURL returns the URL of a stored key. With no STORAGE_PUBLIC_URL it is
+// the host-independent "/files/<key>" (the web app proxies /files to the API).
 func (p *localProvider) PublicURL(key string) string {
-	return p.publicURL + "/" + strings.TrimLeft(key, "/")
+	base := p.publicURL
+	if base == "" {
+		base = strings.TrimSuffix(FilesPrefix, "/")
+	}
+	return base + "/" + strings.TrimLeft(key, "/")
 }
 
 // FileServer serves stored files over HTTP (used when provider is local).

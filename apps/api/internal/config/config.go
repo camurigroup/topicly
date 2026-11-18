@@ -75,7 +75,8 @@ func Load() Config {
 		Storage: StorageConfig{
 			Provider:       getEnv("STORAGE_PROVIDER", "local"),
 			LocalPath:      getEnv("STORAGE_LOCAL_PATH", "./storage"),
-			PublicURL:      getEnv("STORAGE_PUBLIC_URL", "http://localhost:8080/files"),
+			// Empty = host-independent "/files/..." URLs (the web proxies /files).
+			PublicURL:      getEnv("STORAGE_PUBLIC_URL", ""),
 			MinioEndpoint:  getEnv("MINIO_ENDPOINT", "localhost:9000"),
 			MinioAccessKey: getEnv("MINIO_ACCESS_KEY", ""),
 			MinioSecretKey: getEnv("MINIO_SECRET_KEY", ""),
