@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 import { ModerationActions } from "./actions";
 import { RolesEditor } from "./roles-editor";
+import { UsersTable } from "./users-table";
 
 const fmt = (iso: string) =>
   new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -22,14 +23,28 @@ const fmt = (iso: string) =>
 export default function AdminUsersPage() {
   return (
     <ModerationShell
-      title="Moderar usuário"
-      description="Advertências, silenciamentos, banimentos e cargos. Você só age sobre quem está abaixo de você na hierarquia."
-      perms={["users.ban", "users.mute", "warnings.apply", "roles.manage"]}
+      title="Usuários"
+      description="Busque, filtre e modere membros. Você só age sobre quem está abaixo de você na hierarquia."
+      perms={["users.manage", "users.ban", "users.mute", "warnings.apply", "roles.manage"]}
     >
       <Suspense fallback={null}>
-        <UserModerationView />
+        <UsersRouter />
       </Suspense>
     </ModerationShell>
+  );
+}
+
+/** Shows the list, or one user's moderation sheet when ?u= is present. */
+function UsersRouter() {
+  const params = useSearchParams();
+  if (!params.get("u")) return <UsersTable />;
+  return (
+    <div className="space-y-4">
+      <Link href="/admin/users" className="text-sm text-muted-foreground hover:text-foreground">
+        ← Todos os usuários
+      </Link>
+      <UserModerationView />
+    </div>
   );
 }
 
