@@ -13,13 +13,15 @@ import (
 	"github.com/forum-framework/api/internal/modules/health"
 	"github.com/forum-framework/api/internal/modules/rbac"
 	"github.com/forum-framework/api/internal/modules/user"
+	"github.com/forum-framework/api/internal/storage"
 )
 
-// Server wires configuration, database and the module handlers.
+// Server wires configuration, database, storage and the module handlers.
 type Server struct {
-	cfg    config.Config
-	db     *sql.DB
-	logger *slog.Logger
+	cfg     config.Config
+	db      *sql.DB
+	logger  *slog.Logger
+	storage storage.Provider
 
 	health *health.Handler
 	auth   *auth.Handler
@@ -29,8 +31,13 @@ type Server struct {
 }
 
 // New builds the Server and all module dependencies for the given dialect.
-func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) *Server {
+func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*Server, error) {
 	store := database.NewStore(db, dialect)
+
+	fileStore, err := storage.New(cfg.Storage)
+	if err != nil {
+		return nil, err
+	}
 
 	userRepo := user.NewRepository(store)
 	rbacRepo := rbac.NewRepository(store)
@@ -45,15 +52,16 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) *Se
 	})
 
 	return &Server{
-		cfg:    cfg,
-		db:     db,
-		logger: logger,
-		health: health.New(db),
-		auth:   auth.NewHandler(authSvc),
-		authMW: auth.NewMiddleware(cfg.JWTAccessSecret, rbacSvc),
-		user:   user.NewHandler(userSvc, rbacSvc),
-		rbac:   rbacSvc,
-	}
+		cfg:     cfg,
+		db:      db,
+		logger:  logger,
+		storage: fileStore,
+		health:  health.New(db),
+		auth:    auth.NewHandler(authSvc),
+		authMW:  auth.NewMiddleware(cfg.JWTAccessSecret, rbacSvc),
+		user:    user.NewHandler(userSvc, rbacSvc, fileStore),
+		rbac:    rbacSvc,
+	}, nil
 }
 
 // Seed applies idempotent baseline data (default roles and permissions).
@@ -68,7 +76,16 @@ func (s *Server) HTTPServer() *http.Server {
 		Handler:           s.routes(),
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
-		WriteTimeout:      30 * time.Second,
+		WriteTimeout:      60 * time.Second,
 		IdleTimeout:       120 * time.Second,
 	}
+}
+
+// fileServer returns an HTTP handler for local file serving, if supported.
+func (s *Server) fileServer() (http.Handler, bool) {
+	fs, ok := s.storage.(interface{ FileServer() http.Handler })
+	if !ok {
+		return nil, false
+	}
+	return fs.FileServer(), true
 }

@@ -165,3 +165,17 @@ func affected(res sql.Result, err error) error {
 	}
 	return nil
 }
+
+// UpdateAvatar sets the user's avatar URL.
+func (r *Repository) UpdateAvatar(ctx context.Context, id string, url *string) error {
+	q := r.store.Rebind(`UPDATE users SET avatar_url = ?, updated_at = ? WHERE id = ?`)
+	res, err := r.store.DB.ExecContext(ctx, q, url, time.Now().UTC(), id)
+	return affected(res, err)
+}
+
+// UpdateBanner sets the user's banner URL.
+func (r *Repository) UpdateBanner(ctx context.Context, id string, url *string) error {
+	q := r.store.Rebind(`UPDATE users SET banner_url = ?, updated_at = ? WHERE id = ?`)
+	res, err := r.store.DB.ExecContext(ctx, q, url, time.Now().UTC(), id)
+	return affected(res, err)
+}

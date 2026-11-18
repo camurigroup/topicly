@@ -33,14 +33,20 @@ func main() {
 	}
 	defer db.Close()
 
-	// Verify connectivity, then run migrations. If the database is not
-	// reachable yet, the server still boots so /health works and /ready
-	// reports the outage.
+	srv, err := server.New(cfg, db, dialect, logger)
+	if err != nil {
+		logger.Error("server init failed", "error", err)
+		os.Exit(1)
+	}
+
+	// Verify connectivity, run migrations and seed baseline data. If the
+	// database is unreachable the server still boots so /health works and
+	// /ready reports the outage.
 	pingCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	pingErr := db.PingContext(pingCtx)
 	cancel()
 	if pingErr != nil {
-		logger.Warn("database not reachable yet; migrations skipped", "error", pingErr)
+		logger.Warn("database not reachable yet; migrations and seed skipped", "error", pingErr)
 	} else {
 		n, err := database.Migrate(db, dialect, migrations.FS, dialect)
 		if err != nil {
@@ -48,9 +54,18 @@ func main() {
 			os.Exit(1)
 		}
 		logger.Info("migrations applied", "count", n, "dialect", dialect)
+
+		seedCtx, seedCancel := context.WithTimeout(context.Background(), 15*time.Second)
+		if err := srv.Seed(seedCtx); err != nil {
+			seedCancel()
+			logger.Error("seed failed", "error", err)
+			os.Exit(1)
+		}
+		seedCancel()
+		logger.Info("baseline data seeded")
 	}
 
-	httpServer := server.New(cfg, db, logger).HTTPServer()
+	httpServer := srv.HTTPServer()
 
 	go func() {
 		logger.Info("api listening", "addr", httpServer.Addr, "env", cfg.AppEnv)

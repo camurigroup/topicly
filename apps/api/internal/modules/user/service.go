@@ -114,3 +114,19 @@ type validationError struct{ msg string }
 
 func (e *validationError) Error() string { return e.msg }
 func (e *validationError) Unwrap() error { return apperr.ErrValidation }
+
+// SetAvatar updates the avatar URL and returns the refreshed account.
+func (s *Service) SetAvatar(ctx context.Context, id, url string) (*Account, error) {
+	if err := s.repo.UpdateAvatar(ctx, id, &url); err != nil {
+		return nil, err
+	}
+	return s.Account(ctx, id)
+}
+
+// SetBanner updates the banner URL and returns the refreshed account.
+func (s *Service) SetBanner(ctx context.Context, id, url string) (*Account, error) {
+	if err := s.repo.UpdateBanner(ctx, id, &url); err != nil {
+		return nil, err
+	}
+	return s.Account(ctx, id)
+}

@@ -14,6 +14,11 @@ func (s *Server) routes() http.Handler {
 	root.HandleFunc("GET /health", s.health.Live)
 	root.HandleFunc("GET /ready", s.health.Ready)
 
+	// Serve uploaded files when using the local storage provider.
+	if fs, ok := s.fileServer(); ok {
+		root.Handle("GET /files/", fs)
+	}
+
 	api := http.NewServeMux()
 	api.HandleFunc("GET /ping", s.health.Ping)
 
@@ -32,6 +37,8 @@ func (s *Server) routes() http.Handler {
 	api.Handle("PATCH /me", auth(http.HandlerFunc(s.user.UpdateProfile)))
 	api.Handle("PUT /me/password", auth(http.HandlerFunc(s.user.ChangePassword)))
 	api.Handle("PUT /me/email", auth(http.HandlerFunc(s.user.ChangeEmail)))
+	api.Handle("POST /me/avatar", auth(http.HandlerFunc(s.user.UploadAvatar)))
+	api.Handle("POST /me/banner", auth(http.HandlerFunc(s.user.UploadBanner)))
 
 	root.Handle("/api/v1/", http.StripPrefix("/api/v1", api))
 
