@@ -68,6 +68,15 @@ func (s *Server) routes() http.Handler {
 	api.Handle("DELETE /replies/{id}", auth(http.HandlerFunc(s.topic.DeleteReply)))
 	api.Handle("POST /replies/{id}/like", auth(http.HandlerFunc(s.topic.LikeReply)))
 
+	// Notifications (live stream via SSE).
+	api.Handle("GET /notifications", auth(http.HandlerFunc(s.notify.List)))
+	api.Handle("GET /notifications/unread-count", auth(http.HandlerFunc(s.notify.UnreadCount)))
+	api.Handle("GET /notifications/stream", auth(http.HandlerFunc(s.notify.Stream)))
+	api.Handle("PUT /notifications/read-all", auth(http.HandlerFunc(s.notify.MarkAllRead)))
+	api.Handle("PUT /notifications/{id}/read", auth(http.HandlerFunc(s.notify.MarkRead)))
+	api.Handle("DELETE /notifications/{id}", auth(http.HandlerFunc(s.notify.Delete)))
+	api.Handle("POST /admin/notifications", s.perm(rbac.PermSettingsManage, s.notify.Broadcast))
+
 	root.Handle("/api/v1/", http.StripPrefix("/api/v1", api))
 
 	return middleware.Chain(root,

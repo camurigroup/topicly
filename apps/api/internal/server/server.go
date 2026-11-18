@@ -13,6 +13,7 @@ import (
 	"github.com/forum-framework/api/internal/modules/auth"
 	"github.com/forum-framework/api/internal/modules/category"
 	"github.com/forum-framework/api/internal/modules/health"
+	"github.com/forum-framework/api/internal/modules/notification"
 	"github.com/forum-framework/api/internal/modules/rbac"
 	"github.com/forum-framework/api/internal/modules/topic"
 	"github.com/forum-framework/api/internal/modules/user"
@@ -33,6 +34,7 @@ type Server struct {
 	user        *user.Handler
 	category    *category.Handler
 	topic       *topic.Handler
+	notify      *notification.Handler
 	rbac        *rbac.Service
 }
 
@@ -50,8 +52,10 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 	tokenRepo := auth.NewRefreshTokenRepository(store)
 	categoryRepo := category.NewRepository(store)
 	topicRepo := topic.NewRepository(store)
+	notifyRepo := notification.NewRepository(store)
 
 	rbacSvc := rbac.NewService(rbacRepo)
+	notifySvc := notification.NewService(notifyRepo, notification.NewHub(), logger)
 	userSvc := user.NewService(userRepo)
 	categorySvc := category.NewService(categoryRepo)
 	topicSvc := topic.NewService(topicRepo, rbacSvc)
@@ -73,6 +77,7 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 		user:        user.NewHandler(userSvc, rbacSvc, fileStore),
 		category:    category.NewHandler(categorySvc),
 		topic:       topic.NewHandler(topicSvc),
+		notify:      notification.NewHandler(notifySvc),
 		rbac:        rbacSvc,
 	}, nil
 }
