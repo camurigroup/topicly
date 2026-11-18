@@ -511,7 +511,8 @@ export const api = {
   publicProfile: (username: string) =>
     raw<PublicProfile>(`/api/v1/users/${encodeURIComponent(username)}`, {}),
 
-  updateProfile: (input: { displayName: string; bio?: string | null }) =>
+  /** Partial update: omitted fields are kept; bio "" clears it. */
+  updateProfile: (input: { displayName?: string; bio?: string }) =>
     raw<Account>("/api/v1/me", { method: "PATCH", body: input, auth: true }),
 
   changePassword: (input: { currentPassword: string; newPassword: string }) =>

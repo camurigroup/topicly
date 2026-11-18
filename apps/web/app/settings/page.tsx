@@ -69,7 +69,8 @@ function ProfileSection({
     setBusy(true);
     setMsg(null);
     try {
-      const { data } = await api.updateProfile({ displayName, bio: bio || null });
+      // PATCH semantics: only these two fields change; "" clears the bio.
+      const { data } = await api.updateProfile({ displayName, bio });
       onSaved(data);
       setMsg({ ok: true, text: "Perfil atualizado." });
     } catch (err) {
