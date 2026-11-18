@@ -69,6 +69,12 @@ func (s *Server) routes() http.Handler {
 	api.Handle("DELETE /replies/{id}", auth(http.HandlerFunc(s.topic.DeleteReply)))
 	api.Handle("POST /replies/{id}/like", auth(http.HandlerFunc(s.topic.LikeReply)))
 
+	// Home page and administrable site texts.
+	api.HandleFunc("GET /home", s.site.Home)
+	api.HandleFunc("GET /site/settings", s.site.Settings)
+	api.Handle("GET /admin/site/settings", s.perm(rbac.PermSettingsManage, s.site.AdminSettings))
+	api.Handle("PUT /admin/site/settings", s.perm(rbac.PermSettingsManage, s.site.UpdateSettings))
+
 	// Global search (filters applied in the database).
 	api.HandleFunc("GET /search", s.search.Search)
 

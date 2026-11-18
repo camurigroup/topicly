@@ -16,6 +16,7 @@ import (
 	"github.com/forum-framework/api/internal/modules/notification"
 	"github.com/forum-framework/api/internal/modules/rbac"
 	"github.com/forum-framework/api/internal/modules/search"
+	"github.com/forum-framework/api/internal/modules/site"
 	"github.com/forum-framework/api/internal/modules/social"
 	"github.com/forum-framework/api/internal/modules/topic"
 	"github.com/forum-framework/api/internal/modules/user"
@@ -39,6 +40,8 @@ type Server struct {
 	notify      *notification.Handler
 	social      *social.Handler
 	search      *search.Handler
+	site        *site.Handler
+	siteSvc     *site.Service
 	rbac        *rbac.Service
 }
 
@@ -64,6 +67,7 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 	userSvc := user.NewService(userRepo)
 	categorySvc := category.NewService(categoryRepo)
 	topicSvc := topic.NewService(topicRepo, rbacSvc, notifySvc)
+	siteSvc := site.NewService(site.NewRepository(store), topicRepo, categoryRepo)
 	authSvc := auth.NewService(userRepo, tokenRepo, rbacSvc, auth.Config{
 		AccessSecret: cfg.JWTAccessSecret,
 		AccessTTL:    cfg.JWTAccessTTL,
@@ -85,13 +89,19 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 		notify:      notification.NewHandler(notifySvc),
 		social:      social.NewHandler(social.NewService(socialRepo, notifySvc)),
 		search:      search.NewHandler(search.NewService(search.NewRepository(store), topicRepo)),
+		site:        site.NewHandler(siteSvc),
+		siteSvc:     siteSvc,
 		rbac:        rbacSvc,
 	}, nil
 }
 
-// Seed applies idempotent baseline data (default roles and permissions).
+// Seed applies idempotent baseline data (default roles, permissions and
+// site settings).
 func (s *Server) Seed(ctx context.Context) error {
-	return s.rbac.Seed(ctx)
+	if err := s.rbac.Seed(ctx); err != nil {
+		return err
+	}
+	return s.siteSvc.Seed(ctx)
 }
 
 // HTTPServer returns a configured *http.Server with sane timeouts.
