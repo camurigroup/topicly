@@ -120,6 +120,8 @@ export async function raw<T>(path: string, opts: RequestOptions, retry = true): 
   }
 
   if (!res.ok || !parsed.success) {
+    // A ban ends the session immediately: drop the stored tokens.
+    if (res.status === 403 && parsed.error?.code === "banned") tokens.clear();
     throw new ApiRequestError(
       res.status,
       parsed.error?.code ?? "request_failed",
