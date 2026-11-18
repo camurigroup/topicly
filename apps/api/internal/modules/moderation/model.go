@@ -144,6 +144,8 @@ type SanctionFilter struct {
 	Type       string
 	ActiveOnly bool
 	UserID     string
+	Q          string // username or reason (contains)
+	Ascending  bool   // oldest first
 	Limit      int
 	Offset     int
 }

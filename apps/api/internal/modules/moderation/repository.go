@@ -190,15 +190,25 @@ func (r *Repository) ListSanctions(ctx context.Context, f SanctionFilter) ([]San
 		conds = append(conds, "s.revoked_at IS NULL AND (s.expires_at IS NULL OR s.expires_at > ?)")
 		args = append(args, now)
 	}
+	if q := strings.TrimSpace(f.Q); q != "" {
+		p := database.ContainsPattern(q)
+		conds = append(conds, "(LOWER(u.username) LIKE ? OR LOWER(s.reason) LIKE ?)")
+		args = append(args, p, p)
+	}
 	where := ""
 	if len(conds) > 0 {
 		where = " WHERE " + strings.Join(conds, " AND ")
 	}
 	var total int64
-	if err := r.store.DB.QueryRowContext(ctx, r.store.Rebind("SELECT COUNT(*) FROM sanctions s"+where), args...).Scan(&total); err != nil {
+	countQ := "SELECT COUNT(*) FROM sanctions s JOIN users u ON u.id = s.user_id" + where
+	if err := r.store.DB.QueryRowContext(ctx, r.store.Rebind(countQ), args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
-	q := r.store.Rebind(sanctionSelect + where + " ORDER BY s.created_at DESC LIMIT ? OFFSET ?")
+	dir := "DESC"
+	if f.Ascending {
+		dir = "ASC"
+	}
+	q := r.store.Rebind(sanctionSelect + where + " ORDER BY s.created_at " + dir + " LIMIT ? OFFSET ?")
 	rows, err := r.store.DB.QueryContext(ctx, q, append(args, f.Limit, f.Offset)...)
 	if err != nil {
 		return nil, 0, err

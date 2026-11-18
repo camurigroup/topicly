@@ -118,6 +118,7 @@ func (h *Handler) ListSanctions(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	items, total, err := h.svc.ListSanctions(r.Context(), SanctionFilter{
 		Type: q.Get("type"), ActiveOnly: q.Get("active") == "1" || q.Get("active") == "true",
+		Q: q.Get("q"), Ascending: q.Get("order") == "asc",
 		Limit: p.Limit, Offset: p.Offset,
 	})
 	if err != nil {
