@@ -49,3 +49,5 @@ Em construção — ver [ROADMAP.md](ROADMAP.md).
 - ✅ **Etapa 1 — Fundação** (monorepo, API Go, web Next.js, migrations, Docker)
 - ✅ **Etapa 2 — Autenticação e usuários** (registro/login/refresh, perfis, uploads, RBAC base, rate limit) — verificada ponta a ponta
 - ✅ **Etapa 3 — Fórum**: backend (categorias/subcategorias, tópicos, respostas, likes, follows) + frontend — navegação de categorias, tópicos paginados, respostas aninhadas, curtir/seguir, moderação (fixar/bloquear/destacar) e painel de categorias.
+- ✅ **Etapa 4 — Social, notificações e busca**: seguir usuários/categorias/subcategorias/tópicos com listas e contadores; notificações internas (seguidor, curtidas, respostas, tópicos seguidos, menções `@`, novos tópicos, avisos admin) com leitura/exclusão e tempo real via SSE; busca global com filtros no backend; descoberta (em alta, populares, recentes); home com textos e seções administráveis (`/admin/home`). Verificada em PostgreSQL e MariaDB.
+  - Tempo real usa um hub em memória (sem dependência de Redis); com várias instâncias da API, cada uma alcança só as próprias conexões.
