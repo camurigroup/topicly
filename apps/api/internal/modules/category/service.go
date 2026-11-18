@@ -74,22 +74,46 @@ func (s *Service) Update(ctx context.Context, idValue string, in UpdateInput) (*
 	if err != nil {
 		return nil, err
 	}
-	name := strings.TrimSpace(in.Name)
-	if l := len([]rune(name)); l < 2 || l > 120 {
-		return nil, validationErr("o nome deve ter entre 2 e 120 caracteres")
-	}
-	c.Name = name
-	c.Description = in.Description
-	c.Icon = in.Icon
-	c.CoverURL = in.CoverURL
-	c.Position = in.Position
-	if in.IsActive != nil {
-		c.IsActive = *in.IsActive
+	if err := applyUpdate(c, in); err != nil {
+		return nil, err
 	}
 	if err := s.repo.Update(ctx, c); err != nil {
 		return nil, err
 	}
 	return c, nil
+}
+
+// applyUpdate merges a partial update into c: omitted fields are kept, an
+// empty optional text clears it. Toggling isActive never wipes the rest.
+func applyUpdate(c *Category, in UpdateInput) error {
+	if in.Name != nil {
+		name := strings.TrimSpace(*in.Name)
+		if l := len([]rune(name)); l < 2 || l > 120 {
+			return validationErr("o nome deve ter entre 2 e 120 caracteres")
+		}
+		c.Name = name
+	}
+	c.Description = mergeText(c.Description, in.Description)
+	c.Icon = mergeText(c.Icon, in.Icon)
+	c.CoverURL = mergeText(c.CoverURL, in.CoverURL)
+	if in.Position != nil {
+		c.Position = *in.Position
+	}
+	if in.IsActive != nil {
+		c.IsActive = *in.IsActive
+	}
+	return nil
+}
+
+func mergeText(current, next *string) *string {
+	if next == nil {
+		return current
+	}
+	v := strings.TrimSpace(*next)
+	if v == "" {
+		return nil
+	}
+	return &v
 }
 
 // Delete removes a category.

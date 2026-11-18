@@ -29,10 +29,12 @@ type CreateInput struct {
 
 // UpdateInput is the payload to update a category.
 type UpdateInput struct {
-	Name        string  `json:"name"`
+	// Partial update (PATCH): nil keeps the current value; for the optional
+	// text fields an empty string clears them.
+	Name        *string `json:"name"`
 	Description *string `json:"description"`
 	Icon        *string `json:"icon"`
 	CoverURL    *string `json:"coverUrl"`
-	Position    int     `json:"position"`
+	Position    *int    `json:"position"`
 	IsActive    *bool   `json:"isActive"`
 }
