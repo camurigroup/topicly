@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/forum-framework/api/internal/database"
 	"github.com/forum-framework/api/internal/shared/apperr"
 )
 
@@ -168,16 +169,22 @@ func (r *Repository) ListReports(ctx context.Context, f ReportFilter) ([]Report,
 		conds = append(conds, "r.target_type = ?")
 		args = append(args, f.TargetType)
 	}
+	if q := strings.TrimSpace(f.Q); q != "" {
+		p := database.ContainsPattern(q)
+		conds = append(conds, "(LOWER(r.reason) LIKE ? OR LOWER(COALESCE(r.details, '')) LIKE ? OR LOWER(COALESCE(rep.username, '')) LIKE ?)")
+		args = append(args, p, p, p)
+	}
 	where := ""
 	if len(conds) > 0 {
 		where = " WHERE " + strings.Join(conds, " AND ")
 	}
 	var total int64
-	if err := r.store.DB.QueryRowContext(ctx, r.store.Rebind("SELECT COUNT(*) FROM reports r"+where), args...).Scan(&total); err != nil {
+	countQ := "SELECT COUNT(*) FROM reports r LEFT JOIN users rep ON rep.id = r.reporter_id" + where
+	if err := r.store.DB.QueryRowContext(ctx, r.store.Rebind(countQ), args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 	order := " ORDER BY r.created_at DESC"
-	if f.Status == StatusPending || f.Status == StatusReviewing {
+	if f.Order == "asc" || (f.Order == "" && (f.Status == StatusPending || f.Status == StatusReviewing)) {
 		order = " ORDER BY r.created_at ASC"
 	}
 	q := r.store.Rebind(reportSelect + where + order + " LIMIT ? OFFSET ?")

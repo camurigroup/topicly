@@ -151,7 +151,8 @@ func (h *Handler) ListReports(w http.ResponseWriter, r *http.Request) {
 	p := httpx.Paginate(r, 20, 100)
 	q := r.URL.Query()
 	items, total, err := h.svc.ListReports(r.Context(), ReportFilter{
-		Status: q.Get("status"), TargetType: q.Get("targetType"), Limit: p.Limit, Offset: p.Offset,
+		Status: q.Get("status"), TargetType: q.Get("targetType"), Q: q.Get("q"), Order: q.Get("order"),
+		Limit: p.Limit, Offset: p.Offset,
 	})
 	if err != nil {
 		httpx.WriteError(w, err)

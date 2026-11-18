@@ -135,6 +135,8 @@ type UpdateReportInput struct {
 type ReportFilter struct {
 	Status     string
 	TargetType string
+	Q          string // reason, details or reporter username (contains)
+	Order      string // asc | desc ("" = oldest first for open queues)
 	Limit      int
 	Offset     int
 }

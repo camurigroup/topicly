@@ -27,6 +27,8 @@ type Filter struct {
 	Action  string
 	ActorID string
 	Target  string
+	Q       string // actor username or action (contains)
+	Asc     bool   // oldest first
 	Limit   int
 	Offset  int
 }

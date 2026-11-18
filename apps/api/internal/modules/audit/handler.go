@@ -23,6 +23,8 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		Action:  q.Get("action"),
 		ActorID: q.Get("actor"),
 		Target:  q.Get("target"),
+		Q:       q.Get("q"),
+		Asc:     q.Get("order") == "asc",
 		Limit:   p.Limit,
 		Offset:  p.Offset,
 	})
