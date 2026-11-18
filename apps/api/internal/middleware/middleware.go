@@ -135,6 +135,10 @@ func (sw *statusWriter) Write(b []byte) (int, error) {
 	return sw.ResponseWriter.Write(b)
 }
 
+// Unwrap exposes the underlying writer so http.ResponseController can reach
+// Flush and deadline controls (needed for streaming responses such as SSE).
+func (sw *statusWriter) Unwrap() http.ResponseWriter { return sw.ResponseWriter }
+
 func newID() string {
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
