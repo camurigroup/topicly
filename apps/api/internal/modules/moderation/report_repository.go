@@ -149,6 +149,13 @@ func (r *Repository) UpdateReportStatus(ctx context.Context, id, status, handled
 	if note != "" {
 		noteVal = note
 	}
+	// An empty note keeps the existing one (moving a report between statuses
+	// must not erase what a moderator already wrote).
+	if noteVal == nil {
+		q := r.store.Rebind("UPDATE reports SET status = ?, handled_by = ?, updated_at = ? WHERE id = ?")
+		_, err := r.store.DB.ExecContext(ctx, q, status, handledBy, time.Now().UTC(), id)
+		return err
+	}
 	q := r.store.Rebind("UPDATE reports SET status = ?, handled_by = ?, resolution_note = ?, updated_at = ? WHERE id = ?")
 	_, err := r.store.DB.ExecContext(ctx, q, status, handledBy, noteVal, time.Now().UTC(), id)
 	return err
