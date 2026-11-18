@@ -73,8 +73,8 @@ func Load() Config {
 		},
 		RedisURL: getEnv("REDIS_URL", ""),
 		Storage: StorageConfig{
-			Provider:       getEnv("STORAGE_PROVIDER", "local"),
-			LocalPath:      getEnv("STORAGE_LOCAL_PATH", "./storage"),
+			Provider:  getEnv("STORAGE_PROVIDER", "local"),
+			LocalPath: getEnv("STORAGE_LOCAL_PATH", "./storage"),
 			// Empty = host-independent "/files/..." URLs (the web proxies /files).
 			PublicURL:      getEnv("STORAGE_PUBLIC_URL", ""),
 			MinioEndpoint:  getEnv("MINIO_ENDPOINT", "localhost:9000"),
