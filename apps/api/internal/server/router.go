@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/forum-framework/api/internal/middleware"
+	"github.com/forum-framework/api/internal/modules/rbac"
 )
 
 // routes builds the HTTP handler with all routes and the middleware chain.
@@ -41,6 +42,14 @@ func (s *Server) routes() http.Handler {
 	api.Handle("POST /me/avatar", auth(http.HandlerFunc(s.user.UploadAvatar)))
 	api.Handle("POST /me/banner", auth(http.HandlerFunc(s.user.UploadBanner)))
 
+	// Categories: public reads, permission-gated writes.
+	api.HandleFunc("GET /categories", s.category.List)
+	api.HandleFunc("GET /categories/{slug}", s.category.GetBySlug)
+	api.Handle("GET /admin/categories", s.perm(rbac.PermCategoriesManage, s.category.ListAll))
+	api.Handle("POST /categories", s.perm(rbac.PermCategoriesManage, s.category.Create))
+	api.Handle("PATCH /categories/{id}", s.perm(rbac.PermCategoriesManage, s.category.Update))
+	api.Handle("DELETE /categories/{id}", s.perm(rbac.PermCategoriesManage, s.category.Delete))
+
 	root.Handle("/api/v1/", http.StripPrefix("/api/v1", api))
 
 	return middleware.Chain(root,
@@ -49,4 +58,9 @@ func (s *Server) routes() http.Handler {
 		middleware.Recover(s.logger),
 		middleware.CORS(s.cfg.CORSAllowedOrigins),
 	)
+}
+
+// perm composes RequireAuth + RequirePermission around a handler func.
+func (s *Server) perm(slug string, h http.HandlerFunc) http.Handler {
+	return s.authMW.RequireAuth(s.authMW.RequirePermission(slug)(http.HandlerFunc(h)))
 }

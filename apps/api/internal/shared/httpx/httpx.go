@@ -47,3 +47,40 @@ func UserAgent(r *http.Request) string {
 	}
 	return ua
 }
+
+// Pagination holds parsed list pagination parameters.
+type Pagination struct {
+	Page   int
+	Limit  int
+	Offset int
+}
+
+// Paginate reads page and limit from the query string, applying bounds.
+func Paginate(r *http.Request, defaultLimit, maxLimit int) Pagination {
+	page := atoiDefault(r.URL.Query().Get("page"), 1)
+	if page < 1 {
+		page = 1
+	}
+	limit := atoiDefault(r.URL.Query().Get("limit"), defaultLimit)
+	if limit < 1 {
+		limit = defaultLimit
+	}
+	if limit > maxLimit {
+		limit = maxLimit
+	}
+	return Pagination{Page: page, Limit: limit, Offset: (page - 1) * limit}
+}
+
+func atoiDefault(s string, def int) int {
+	if s == "" {
+		return def
+	}
+	n := 0
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return def
+		}
+		n = n*10 + int(c-'0')
+	}
+	return n
+}
