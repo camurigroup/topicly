@@ -1,10 +1,15 @@
 package rbac
 
-import "context"
+import (
+	"context"
+
+	"github.com/forum-framework/api/internal/modules/audit"
+)
 
 // Service exposes RBAC business logic.
 type Service struct {
-	repo *Repository
+	repo  *Repository
+	audit *audit.Service
 }
 
 // NewService builds an rbac Service.
