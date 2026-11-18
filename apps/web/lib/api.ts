@@ -287,9 +287,15 @@ export const api = {
 
   /* ------------------------------- categories ----------------------------- */
 
-  categories: () => raw<Category[]>("/api/v1/categories", {}),
+  categories: async () => {
+    const { data } = await raw<Category[] | null>("/api/v1/categories", {});
+    return { data: data ?? [] };
+  },
 
-  allCategories: () => raw<Category[]>("/api/v1/admin/categories", { auth: true }),
+  allCategories: async () => {
+    const { data } = await raw<Category[] | null>("/api/v1/admin/categories", { auth: true });
+    return { data: data ?? [] };
+  },
 
   category: (slug: string) =>
     raw<Category>(`/api/v1/categories/${encodeURIComponent(slug)}`, {}),
@@ -318,8 +324,9 @@ export const api = {
     if (params.page) q.set("page", String(params.page));
     if (params.limit) q.set("limit", String(params.limit));
     const query = q.toString();
-    const { data, meta } = await raw<Topic[]>(`/api/v1/topics${query ? `?${query}` : ""}`, { auth: true });
-    return { items: data, meta: meta ?? { total: data.length, page: 1, limit: data.length } };
+    const { data, meta } = await raw<Topic[] | null>(`/api/v1/topics${query ? `?${query}` : ""}`, { auth: true });
+    const items = data ?? [];
+    return { items, meta: meta ?? { total: items.length, page: 1, limit: items.length } };
   },
 
   topic: (id: string) => raw<Topic>(`/api/v1/topics/${id}`, { auth: true }),
@@ -355,11 +362,12 @@ export const api = {
     if (params.page) q.set("page", String(params.page));
     if (params.limit) q.set("limit", String(params.limit));
     const query = q.toString();
-    const { data, meta } = await raw<Reply[]>(
+    const { data, meta } = await raw<Reply[] | null>(
       `/api/v1/topics/${topicId}/replies${query ? `?${query}` : ""}`,
       { auth: true },
     );
-    return { items: data, meta: meta ?? { total: data.length, page: 1, limit: data.length } };
+    const items = data ?? [];
+    return { items, meta: meta ?? { total: items.length, page: 1, limit: items.length } };
   },
 
   createReply: (topicId: string, input: { content: string; parentId?: string | null }) =>
