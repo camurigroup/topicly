@@ -69,6 +69,9 @@ func (s *Server) routes() http.Handler {
 	api.Handle("DELETE /replies/{id}", auth(http.HandlerFunc(s.topic.DeleteReply)))
 	api.Handle("POST /replies/{id}/like", auth(http.HandlerFunc(s.topic.LikeReply)))
 
+	// Global search (filters applied in the database).
+	api.HandleFunc("GET /search", s.search.Search)
+
 	// Social: follow users and categories, follower lists and counters.
 	api.Handle("POST /users/{username}/follow", auth(http.HandlerFunc(s.social.FollowUser)))
 	api.Handle("GET /users/{username}/stats", optional(http.HandlerFunc(s.social.UserStats)))
