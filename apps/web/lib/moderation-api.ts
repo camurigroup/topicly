@@ -178,9 +178,17 @@ export const modApi = {
     raw<Warning>(`/api/v1/admin/users/${u(username)}/warnings`, { method: "POST", body: { reason }, auth: true }),
   revoke: (sanctionId: string, reason: string) =>
     raw<Sanction>(`/api/v1/admin/sanctions/${sanctionId}/revoke`, { method: "POST", body: { reason }, auth: true }),
-  sanctions: (params: { type?: SanctionType; active?: boolean; page?: number } = {}): Promise<Page<Sanction>> =>
+  sanctions: (
+    params: { type?: SanctionType; active?: boolean; page?: number; q?: string; order?: "asc" | "desc" } = {},
+  ): Promise<Page<Sanction>> =>
     paged<Sanction>(
-      `/api/v1/admin/sanctions${query({ type: params.type, active: params.active ? "1" : undefined, page: params.page })}`,
+      `/api/v1/admin/sanctions${query({
+        type: params.type,
+        active: params.active ? "1" : undefined,
+        page: params.page,
+        q: params.q,
+        order: params.order,
+      })}`,
       true,
     ),
 
