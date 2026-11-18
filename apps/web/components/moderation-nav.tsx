@@ -59,7 +59,7 @@ export function ModerationShell({ title, description, perms, actions, children }
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <nav aria-label="Moderação" className="-mx-1 flex gap-1 overflow-x-auto pb-1">
+      <nav aria-label="Moderação" className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {sections.map((s) => {
           const active = pathname.startsWith(s.href);
           const Icon = s.icon;

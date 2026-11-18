@@ -25,7 +25,13 @@ const STATUS_TONE: Record<ReportStatus, string> = {
   resolved: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
   rejected: "bg-muted text-muted-foreground",
 };
-const reasonLabel = (r: string) => REPORT_REASONS.find((x) => x.value === r)?.label ?? r;
+const EMPTY_MESSAGE: Record<ReportStatus, string> = {
+  pending: "Nenhuma denúncia pendente. Tudo em dia!",
+  reviewing: "Nenhuma denúncia em análise.",
+  resolved: "Nenhuma denúncia resolvida ainda.",
+  rejected: "Nenhuma denúncia rejeitada.",
+};
+const reasonLabel =(r: string) => REPORT_REASONS.find((x) => x.value === r)?.label ?? r;
 const PAGE_SIZE = 20;
 
 export default function ReportsPage() {
@@ -118,7 +124,7 @@ export default function ReportsPage() {
       ) : items.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border py-16 text-center">
           <p className="font-medium">Nada por aqui.</p>
-          <p className="mt-1 text-sm text-muted-foreground">Nenhuma denúncia {REPORT_STATUS_LABEL[status].toLowerCase()}.</p>
+          <p className="mt-1 text-sm text-muted-foreground">{EMPTY_MESSAGE[status]}</p>
         </div>
       ) : (
         <ul className="space-y-3">

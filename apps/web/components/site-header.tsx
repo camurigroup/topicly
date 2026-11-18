@@ -98,9 +98,9 @@ export function SiteHeader() {
                 </Button>
               )}
               <Button variant="ghost" size="sm" className="hidden sm:inline-flex" asChild>
-                <Link href={`/u/${user.username}`}>
+                <Link href={`/u/${user.username}`} aria-label={`Perfil de ${user.displayName}`}>
                   <UserIcon className="h-4 w-4" />
-                  {user.displayName}
+                  <span className="hidden max-w-[12rem] truncate lg:inline">{user.displayName}</span>
                 </Link>
               </Button>
               <Button variant="ghost" size="icon" aria-label="Configurações" asChild>
