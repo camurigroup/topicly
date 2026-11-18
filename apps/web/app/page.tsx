@@ -29,17 +29,20 @@ export default function HomePage() {
     <div className="mx-auto max-w-2xl space-y-8">
       <section className="space-y-4">
         <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
-          Etapas 2 e 3 em andamento
+          Núcleo do fórum disponível
         </span>
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Forum Framework</h1>
         <p className="text-lg text-muted-foreground">
           {user
             ? `Bem-vindo de volta, ${user.displayName}.`
-            : "Autenticação, perfis e o núcleo do fórum sendo construídos."}
+            : "Categorias, tópicos e discussões — explore a comunidade."}
         </p>
         <div className="flex gap-3">
+          <Button asChild>
+            <Link href="/categories">Explorar categorias</Link>
+          </Button>
           {user ? (
-            <Button asChild>
+            <Button variant="outline" asChild>
               <Link href={`/u/${user.username}`}>Meu perfil</Link>
             </Button>
           ) : (
