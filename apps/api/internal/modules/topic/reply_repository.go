@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/forum-framework/api/internal/shared/apperr"
@@ -263,4 +264,32 @@ func (r *Repository) IsFollowingTopic(ctx context.Context, userID, topicID strin
 		return false, nil
 	}
 	return err == nil, err
+}
+
+// LikedSet returns which of targetIDs the user has liked, in a single query.
+func (r *Repository) LikedSet(ctx context.Context, userID, targetType string, targetIDs []string) (map[string]bool, error) {
+	out := make(map[string]bool, len(targetIDs))
+	if userID == "" || len(targetIDs) == 0 {
+		return out, nil
+	}
+	placeholders := strings.TrimSuffix(strings.Repeat("?, ", len(targetIDs)), ", ")
+	q := r.store.Rebind("SELECT target_id FROM likes WHERE user_id = ? AND target_type = ? AND target_id IN (" + placeholders + ")")
+	args := make([]any, 0, len(targetIDs)+2)
+	args = append(args, userID, targetType)
+	for _, id := range targetIDs {
+		args = append(args, id)
+	}
+	rows, err := r.store.DB.QueryContext(ctx, q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		out[id] = true
+	}
+	return out, rows.Err()
 }

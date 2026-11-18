@@ -198,9 +198,17 @@ func (s *Service) ListReplies(ctx context.Context, topicID, viewerID string, lim
 	if err != nil {
 		return nil, 0, err
 	}
-	if viewerID != "" {
+	if viewerID != "" && len(replies) > 0 {
+		ids := make([]string, len(replies))
 		for i := range replies {
-			replies[i].Liked, _ = s.repo.IsLiked(ctx, viewerID, TargetReply, replies[i].ID)
+			ids[i] = replies[i].ID
+		}
+		liked, err := s.repo.LikedSet(ctx, viewerID, TargetReply, ids)
+		if err != nil {
+			return nil, 0, err
+		}
+		for i := range replies {
+			replies[i].Liked = liked[replies[i].ID]
 		}
 	}
 	return replies, total, nil
