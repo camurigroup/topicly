@@ -13,6 +13,9 @@ FROM alpine:3.21 AS runtime
 RUN apk add --no-cache ca-certificates tzdata && adduser -D -u 1001 app
 WORKDIR /app
 COPY --from=build /out/server /app/server
+# Writable dir for the local storage provider (uploads), owned by the app user.
+RUN mkdir -p /app/storage && chown -R app:app /app/storage
+VOLUME ["/app/storage"]
 USER app
 EXPOSE 8080
 ENTRYPOINT ["/app/server"]
