@@ -1,91 +1,251 @@
 "use client";
 
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { Activity as ActivityIcon, Folder, Heart, Loader2, MessageSquare, MessagesSquare, Sparkles, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { TopicRow } from "@/components/topic-row";
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
+import { UserAvatar } from "@/components/user-avatar";
+import { api, type HomeData } from "@/lib/api";
+import { formatCount, timeAgo } from "@/lib/utils";
 
-type ApiState = { kind: "loading" } | { kind: "ok" } | { kind: "error"; message: string };
+type State = { kind: "loading" } | { kind: "ready"; home: HomeData } | { kind: "error"; message: string };
 
 export default function HomePage() {
   const { user } = useAuth();
-  const [apiState, setApiState] = useState<ApiState>({ kind: "loading" });
+  const [state, setState] = useState<State>({ kind: "loading" });
 
   useEffect(() => {
     let active = true;
     api
-      .getHealth()
-      .then(() => active && setApiState({ kind: "ok" }))
-      .catch((err) => active && setApiState({ kind: "error", message: String(err?.message ?? err) }));
+      .home()
+      .then(({ data }) => active && setState({ kind: "ready", home: data }))
+      .catch((err) => active && setState({ kind: "error", message: err instanceof Error ? err.message : "erro" }));
     return () => {
       active = false;
     };
   }, []);
 
+  if (state.kind === "loading") {
+    return (
+      <div className="flex justify-center py-20 text-muted-foreground">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+  if (state.kind === "error") {
+    return <p className="py-20 text-center text-destructive">Não foi possível carregar a página inicial ({state.message}).</p>;
+  }
+
+  const { home } = state;
+  const s = home.settings;
+  const show = (k: string) => s[`home.show.${k}`] === "true";
+  const welcome = user ? s["home.welcome.member"]?.replaceAll("{name}", user.displayName) : null;
+  const roots = home.categories.filter((c) => c.parentId === null);
+  const subCount = (id: string) => home.categories.filter((c) => c.parentId === id).length;
+
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
-      <section className="space-y-4">
-        <span className="inline-flex rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
-          Núcleo do fórum disponível
-        </span>
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Forum Framework</h1>
-        <p className="text-lg text-muted-foreground">
-          {user
-            ? `Bem-vindo de volta, ${user.displayName}.`
-            : "Categorias, tópicos e discussões — explore a comunidade."}
-        </p>
-        <div className="flex gap-3">
-          <Button asChild>
-            <Link href="/categories">Explorar categorias</Link>
-          </Button>
-          {user ? (
-            <Button variant="outline" asChild>
-              <Link href={`/u/${user.username}`}>Meu perfil</Link>
-            </Button>
-          ) : (
-            <>
+    <div className="mx-auto max-w-5xl space-y-12">
+      {/* Banner */}
+      <section
+        className="relative overflow-hidden rounded-2xl border border-border bg-card px-6 py-12 text-card-foreground sm:px-10 sm:py-16"
+        style={
+          s["home.banner.image"]
+            ? { backgroundImage: `linear-gradient(to right, hsl(var(--card)) 35%, hsl(var(--card) / 0.6)), url(${JSON.stringify(s["home.banner.image"])})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : undefined
+        }
+      >
+        <div className="max-w-2xl space-y-4">
+          {welcome && <p className="text-sm font-medium text-primary">{welcome}</p>}
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{s["home.banner.title"]}</h1>
+          {s["home.banner.subtitle"] && <p className="text-lg text-muted-foreground">{s["home.banner.subtitle"]}</p>}
+          <div className="flex flex-wrap gap-3 pt-2">
+            {s["home.banner.ctaLabel"] && (
               <Button asChild>
+                <Link href={s["home.banner.ctaLink"] || "/categories"}>{s["home.banner.ctaLabel"]}</Link>
+              </Button>
+            )}
+            {!user && (
+              <Button variant="outline" asChild>
                 <Link href="/register">Criar conta</Link>
               </Button>
-              <Button variant="outline" asChild>
-                <Link href="/login">Entrar</Link>
-              </Button>
-            </>
-          )}
+            )}
+          </div>
         </div>
       </section>
 
-      <section className="rounded-xl border border-border bg-card p-5 text-card-foreground">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Status da API
-        </h2>
-        <ApiStatusRow state={apiState} />
-      </section>
+      {/* Apresentação */}
+      {(s["home.intro.title"] || s["home.intro.text"]) && (
+        <section className="max-w-3xl space-y-2">
+          {s["home.intro.title"] && <h2 className="text-xl font-semibold">{s["home.intro.title"]}</h2>}
+          {s["home.intro.text"] && <p className="whitespace-pre-line text-muted-foreground">{s["home.intro.text"]}</p>}
+        </section>
+      )}
+
+      {/* Estatísticas */}
+      {show("stats") && home.stats && (
+        <section className="space-y-3">
+          <SectionTitle>{s["home.section.stats.title"]}</SectionTitle>
+          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {[
+              { label: "Membros", value: home.stats.users, icon: Users },
+              { label: "Tópicos", value: home.stats.topics, icon: MessagesSquare },
+              { label: "Respostas", value: home.stats.replies, icon: MessageSquare },
+              { label: "Categorias", value: home.stats.categories, icon: Folder },
+              { label: "Curtidas", value: home.stats.likes, icon: Heart },
+            ].map(({ label, value, icon: Icon }) => (
+              <div key={label} className="rounded-xl border border-border bg-card p-4">
+                <dt className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Icon className="h-3.5 w-3.5" />
+                  {label}
+                </dt>
+                <dd className="mt-1 text-2xl font-bold tabular-nums">{formatCount(value)}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+
+      {/* Destaques */}
+      {show("featured") && home.featuredTopics.length > 0 && (
+        <section className="space-y-3">
+          <SectionTitle icon={<Sparkles className="h-4 w-4 text-primary" />}>{s["home.section.featured.title"]}</SectionTitle>
+          <ul className="grid gap-2 md:grid-cols-2">
+            {home.featuredTopics.map((t) => (
+              <TopicRow key={t.id} topic={t} />
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Categorias */}
+      {show("categories") && roots.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <SectionTitle>{s["home.section.categories.title"]}</SectionTitle>
+            <Link href="/categories" className="text-sm text-primary hover:underline">
+              Ver todas
+            </Link>
+          </div>
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {roots.map((c) => (
+              <li key={c.id}>
+                <Link href={`/c/${c.slug}`} className="flex h-full items-start gap-3 rounded-xl border border-border bg-card p-4 hover:bg-secondary/60">
+                  <span className="text-xl leading-none">{c.icon ?? "📁"}</span>
+                  <span className="min-w-0">
+                    <span className="block font-medium">{c.name}</span>
+                    {c.description && <span className="mt-0.5 line-clamp-2 block text-sm text-muted-foreground">{c.description}</span>}
+                    {subCount(c.id) > 0 && (
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        {subCount(c.id)} subcategoria{subCount(c.id) === 1 ? "" : "s"}
+                      </span>
+                    )}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Recentes + Populares */}
+      {(show("recent") || show("popular")) && (
+        <div className="grid gap-8 lg:grid-cols-2">
+          {show("recent") && (
+            <TopicColumn title={s["home.section.recent.title"]} topics={home.recentTopics} href="/discover?section=recent" />
+          )}
+          {show("popular") && (
+            <TopicColumn title={s["home.section.popular.title"]} topics={home.popularTopics} href="/discover?section=popular" />
+          )}
+        </div>
+      )}
+
+      {/* Membros + Atividades */}
+      {(show("users") || show("activity")) && (
+        <div className="grid gap-8 lg:grid-cols-2">
+          {show("users") && home.featuredUsers.length > 0 && (
+            <section className="space-y-3">
+              <SectionTitle>{s["home.section.users.title"]}</SectionTitle>
+              <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+                {home.featuredUsers.map((u) => (
+                  <li key={u.id}>
+                    <Link href={`/u/${u.username}`} className="flex items-center gap-3 p-3 hover:bg-secondary/60">
+                      <UserAvatar name={u.displayName} url={u.avatarUrl} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">{u.displayName}</span>
+                        <span className="block text-xs text-muted-foreground">@{u.username}</span>
+                      </span>
+                      <span className="text-right text-xs text-muted-foreground">
+                        {formatCount(u.followers)} seguidor{u.followers === 1 ? "" : "es"}
+                        <br />
+                        {u.reputation} rep.
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {show("activity") && home.activity.length > 0 && (
+            <section className="space-y-3">
+              <SectionTitle icon={<ActivityIcon className="h-4 w-4 text-primary" />}>{s["home.section.activity.title"]}</SectionTitle>
+              <ul className="space-y-3 rounded-xl border border-border bg-card p-4">
+                {home.activity.map((a) => (
+                  <li key={`${a.kind}-${a.id}`} className="flex items-start gap-3 text-sm">
+                    <UserAvatar name={a.actor.displayName} url={a.actor.avatarUrl} className="h-7 w-7 text-xs" />
+                    <p className="min-w-0 flex-1">
+                      <Link href={`/u/${a.actor.username}`} className="font-medium hover:underline">
+                        {a.actor.displayName}
+                      </Link>{" "}
+                      <span className="text-muted-foreground">{a.kind === "topic" ? "abriu" : "respondeu em"}</span>{" "}
+                      <Link
+                        href={a.kind === "topic" ? `/t/${a.topicId}` : `/t/${a.topicId}#reply-${a.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {a.topicTitle}
+                      </Link>
+                      <span className="block text-xs text-muted-foreground">{timeAgo(a.createdAt)}</span>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
-function ApiStatusRow({ state }: { state: ApiState }) {
-  if (state.kind === "loading") {
-    return (
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" /> Verificando conexão…
-      </div>
-    );
-  }
-  if (state.kind === "ok") {
-    return (
-      <div className="flex items-center gap-2 text-primary">
-        <CheckCircle2 className="h-4 w-4" /> API conectada e saudável.
-      </div>
-    );
-  }
+function SectionTitle({ children, icon }: { children: React.ReactNode; icon?: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 text-destructive">
-      <XCircle className="h-4 w-4" /> API indisponível ({state.message}).
-    </div>
+    <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+      {icon}
+      {children}
+    </h2>
+  );
+}
+
+function TopicColumn({ title, topics, href }: { title: string; topics: HomeData["recentTopics"]; href: string }) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between">
+        <SectionTitle>{title}</SectionTitle>
+        <Link href={href} className="text-sm text-primary hover:underline">
+          Ver mais
+        </Link>
+      </div>
+      {topics.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground">Nenhum tópico ainda.</p>
+      ) : (
+        <ul className="space-y-2">
+          {topics.map((t) => (
+            <TopicRow key={t.id} topic={t} />
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
