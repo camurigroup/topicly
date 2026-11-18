@@ -4,6 +4,7 @@ import { ExternalLink, Gavel, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
+import { FilterSelect, SearchBox } from "@/components/admin/list-kit";
 import { ModerationShell } from "@/components/moderation-nav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,13 +44,24 @@ export default function ReportsPage() {
   const [counts, setCounts] = useState<Record<ReportStatus, number> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [q, setQ] = useState("");
+  const [order, setOrder] = useState<"" | "asc" | "desc">("");
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setQ(search.trim());
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const [list, c] = await Promise.all([
-        modApi.reports({ status, targetType: type || undefined, page }),
+        modApi.reports({ status, targetType: type || undefined, page, q: q || undefined, order: order || undefined }),
         modApi.reportCounts(),
       ]);
       setItems(list.items);
@@ -60,7 +72,7 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [status, type, page]);
+  }, [status, type, page, q, order]);
 
   useEffect(() => {
     void load();
@@ -97,6 +109,20 @@ export default function ReportsPage() {
             </button>
           ))}
         </div>
+        <SearchBox value={search} onChange={setSearch} placeholder="Buscar motivo, detalhes ou @denunciante" />
+        <FilterSelect
+          label="Ordem"
+          value={order}
+          onChange={(v) => {
+            setOrder(v as "" | "asc" | "desc");
+            setPage(1);
+          }}
+          options={[
+            { value: "", label: "Padrão da fila" },
+            { value: "desc", label: "Mais recentes" },
+            { value: "asc", label: "Mais antigas" },
+          ]}
+        />
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           Tipo
           <select

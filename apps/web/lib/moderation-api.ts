@@ -195,14 +195,16 @@ export const modApi = {
   /* reports */
   report: (input: { targetType: ReportTargetType; targetId: string; reason: ReportReason; details?: string }) =>
     raw<Report>("/api/v1/reports", { method: "POST", body: input, auth: true }),
-  reports: (params: { status?: ReportStatus; targetType?: ReportTargetType; page?: number } = {}) =>
+  reports: (
+    params: { status?: ReportStatus; targetType?: ReportTargetType; page?: number; q?: string; order?: "asc" | "desc" } = {},
+  ) =>
     paged<Report>(`/api/v1/admin/reports${query(params)}`, true),
   reportCounts: () => raw<Record<ReportStatus, number>>("/api/v1/admin/reports/counts", { auth: true }),
   updateReport: (id: string, input: { status: ReportStatus; note?: string }) =>
     raw<Report>(`/api/v1/admin/reports/${id}`, { method: "PATCH", body: input, auth: true }),
 
   /* audit */
-  audit: (params: { action?: string; page?: number } = {}) =>
+  audit: (params: { action?: string; page?: number; q?: string; order?: "asc" | "desc" } = {}) =>
     paged<AuditEntry>(`/api/v1/admin/audit${query(params)}`, true),
   auditActions: () => raw<string[]>("/api/v1/admin/audit/actions", { auth: true }),
 };

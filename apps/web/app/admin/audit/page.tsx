@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
+import { FilterSelect, SearchBox } from "@/components/admin/list-kit";
 import { ModerationShell } from "@/components/moderation-nav";
 import { Button } from "@/components/ui/button";
 import { modApi, type AuditEntry } from "@/lib/moderation-api";
@@ -65,6 +66,17 @@ export default function AuditPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [q, setQ] = useState("");
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setQ(search.trim());
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
   useEffect(() => {
     modApi
@@ -77,7 +89,7 @@ export default function AuditPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await modApi.audit({ action: action || undefined, page });
+      const res = await modApi.audit({ action: action || undefined, page, q: q || undefined, order });
       setItems(res.items);
       setTotal(res.meta.total);
     } catch (err) {
@@ -85,7 +97,7 @@ export default function AuditPage() {
     } finally {
       setLoading(false);
     }
-  }, [action, page]);
+  }, [action, page, q, order]);
 
   useEffect(() => {
     void load();
@@ -119,6 +131,21 @@ export default function AuditPage() {
         </label>
       }
     >
+      <div className="flex flex-wrap items-center gap-2">
+        <SearchBox value={search} onChange={setSearch} placeholder="Buscar por @autor ou ação" />
+        <FilterSelect
+          label="Ordem"
+          value={order}
+          onChange={(v) => {
+            setOrder(v as "asc" | "desc");
+            setPage(1);
+          }}
+          options={[
+            { value: "desc", label: "Mais recentes" },
+            { value: "asc", label: "Mais antigas" },
+          ]}
+        />
+      </div>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       {loading ? (
         <div className="flex justify-center py-16 text-muted-foreground">
