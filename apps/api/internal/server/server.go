@@ -9,6 +9,7 @@ import (
 
 	"github.com/forum-framework/api/internal/config"
 	"github.com/forum-framework/api/internal/database"
+	"github.com/forum-framework/api/internal/middleware"
 	"github.com/forum-framework/api/internal/modules/auth"
 	"github.com/forum-framework/api/internal/modules/health"
 	"github.com/forum-framework/api/internal/modules/rbac"
@@ -23,11 +24,12 @@ type Server struct {
 	logger  *slog.Logger
 	storage storage.Provider
 
-	health *health.Handler
-	auth   *auth.Handler
-	authMW *auth.Middleware
-	user   *user.Handler
-	rbac   *rbac.Service
+	health      *health.Handler
+	auth        *auth.Handler
+	authMW      *auth.Middleware
+	authLimiter *middleware.RateLimiter
+	user        *user.Handler
+	rbac        *rbac.Service
 }
 
 // New builds the Server and all module dependencies for the given dialect.
@@ -52,15 +54,16 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 	})
 
 	return &Server{
-		cfg:     cfg,
-		db:      db,
-		logger:  logger,
-		storage: fileStore,
-		health:  health.New(db),
-		auth:    auth.NewHandler(authSvc),
-		authMW:  auth.NewMiddleware(cfg.JWTAccessSecret, rbacSvc),
-		user:    user.NewHandler(userSvc, rbacSvc, fileStore),
-		rbac:    rbacSvc,
+		cfg:         cfg,
+		db:          db,
+		logger:      logger,
+		storage:     fileStore,
+		health:      health.New(db),
+		auth:        auth.NewHandler(authSvc),
+		authMW:      auth.NewMiddleware(cfg.JWTAccessSecret, rbacSvc),
+		authLimiter: middleware.NewRateLimiter(20, time.Minute),
+		user:        user.NewHandler(userSvc, rbacSvc, fileStore),
+		rbac:        rbacSvc,
 	}, nil
 }
 
