@@ -20,10 +20,18 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
       <div className="container flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <MessagesSquare className="h-5 w-5 text-primary" />
-          <span>Forum</span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <MessagesSquare className="h-5 w-5 text-primary" />
+            <span>Forum</span>
+          </Link>
+          <Link
+            href="/categories"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Categorias
+          </Link>
+        </div>
         <nav className="flex items-center gap-2">
           <ThemeToggle />
           {loading ? null : user ? (
