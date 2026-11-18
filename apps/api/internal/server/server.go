@@ -30,6 +30,7 @@ import (
 type Server struct {
 	cfg     config.Config
 	db      *sql.DB
+	dialect string
 	logger  *slog.Logger
 	storage storage.Provider
 
@@ -109,6 +110,7 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 	return &Server{
 		cfg:         cfg,
 		db:          db,
+		dialect:     dialect,
 		logger:      logger,
 		storage:     fileStore,
 		health:      health.New(db),
@@ -139,7 +141,17 @@ func (s *Server) Seed(ctx context.Context) error {
 	if err := s.rbac.Seed(ctx); err != nil {
 		return err
 	}
-	return s.siteSvc.Seed(ctx)
+	if err := s.siteSvc.Seed(ctx); err != nil {
+		return err
+	}
+	n, err := s.normalizeMediaURLs(ctx)
+	if err != nil {
+		return err
+	}
+	if n > 0 {
+		s.logger.Info("normalized stored image URLs to /files/…", "count", n)
+	}
+	return nil
 }
 
 // HTTPServer returns a configured *http.Server with sane timeouts.
