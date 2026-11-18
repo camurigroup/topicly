@@ -82,7 +82,7 @@ interface RequestOptions {
   isForm?: boolean;
 }
 
-async function raw<T>(path: string, opts: RequestOptions, retry = true): Promise<{ data: T; meta?: ApiMeta }> {
+export async function raw<T>(path: string, opts: RequestOptions, retry = true): Promise<{ data: T; meta?: ApiMeta }> {
   const url = path.startsWith("http") ? path : `${API_URL}${path}`;
   const headers: Record<string, string> = {};
   let body: BodyInit | undefined;
@@ -405,7 +405,7 @@ export interface SettingDefinition {
   default: string;
 }
 
-function query(params: Record<string, string | number | undefined | null>): string {
+export function query(params: Record<string, string | number | undefined | null>): string {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== "" && v !== 0) q.set(k, String(v));
@@ -414,7 +414,7 @@ function query(params: Record<string, string | number | undefined | null>): stri
   return s ? `?${s}` : "";
 }
 
-async function paged<T>(path: string, auth = false): Promise<Page<T>> {
+export async function paged<T>(path: string, auth = false): Promise<Page<T>> {
   const { data, meta } = await raw<T[] | null>(path, { auth });
   const items = data ?? [];
   return { items, meta: meta ?? { total: items.length, page: 1, limit: items.length } };
