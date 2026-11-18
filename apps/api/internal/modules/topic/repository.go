@@ -180,6 +180,26 @@ func (r *Repository) CategoryIDBySlug(ctx context.Context, slug string) (string,
 	return id, err
 }
 
+// CategoryInfo returns a category's name and parent id.
+func (r *Repository) CategoryInfo(ctx context.Context, id string) (string, *string, error) {
+	q := r.store.Rebind("SELECT name, parent_id FROM categories WHERE id = ?")
+	var (
+		name   string
+		parent sql.NullString
+	)
+	err := r.store.DB.QueryRowContext(ctx, q, id).Scan(&name, &parent)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil, apperr.ErrNotFound
+	}
+	if err != nil {
+		return "", nil, err
+	}
+	if parent.Valid {
+		return name, &parent.String, nil
+	}
+	return name, nil, nil
+}
+
 // CategoryExists reports whether a category id exists.
 func (r *Repository) CategoryExists(ctx context.Context, id string) (bool, error) {
 	q := r.store.Rebind("SELECT 1 FROM categories WHERE id = ? LIMIT 1")

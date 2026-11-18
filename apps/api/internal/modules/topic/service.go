@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/forum-framework/api/internal/modules/notification"
 	"github.com/forum-framework/api/internal/modules/rbac"
 	"github.com/forum-framework/api/internal/shared/apperr"
 	"github.com/forum-framework/api/internal/shared/id"
@@ -14,13 +15,14 @@ import (
 
 // Service implements topic, reply, like and follow business logic.
 type Service struct {
-	repo *Repository
-	rbac *rbac.Service
+	repo   *Repository
+	rbac   *rbac.Service
+	notify *notification.Service
 }
 
-// NewService builds a topic Service.
-func NewService(repo *Repository, rbacSvc *rbac.Service) *Service {
-	return &Service{repo: repo, rbac: rbacSvc}
+// NewService builds a topic Service. notifySvc may be nil (no notifications).
+func NewService(repo *Repository, rbacSvc *rbac.Service, notifySvc *notification.Service) *Service {
+	return &Service{repo: repo, rbac: rbacSvc, notify: notifySvc}
 }
 
 const (
@@ -64,7 +66,12 @@ func (s *Service) CreateTopic(ctx context.Context, authorID string, in CreateTop
 	if err := s.repo.CreateTopic(ctx, t, authorID); err != nil {
 		return nil, err
 	}
-	return s.repo.GetTopicByID(ctx, topicID)
+	created, err := s.repo.GetTopicByID(ctx, topicID)
+	if err != nil {
+		return nil, err
+	}
+	s.notifyNewTopic(ctx, created)
+	return created, nil
 }
 
 // GetTopic returns a topic, increments its view count and resolves viewer flags.
@@ -160,12 +167,25 @@ func (s *Service) CreateReply(ctx context.Context, authorID, topicID string, in 
 	if content == "" || len([]rune(content)) > maxContent {
 		return nil, validationErr("conteúdo inválido")
 	}
+	parentAuthor := ""
+	if in.ParentID != nil {
+		pa, parentTopic, err := s.repo.ReplyMeta(ctx, *in.ParentID)
+		if err != nil || parentTopic != topicID {
+			return nil, validationErr("resposta pai inválida")
+		}
+		parentAuthor = pa
+	}
 	replyID := id.New()
 	rp := &Reply{ID: replyID, TopicID: topicID, ParentID: in.ParentID, Content: content}
 	if err := s.repo.CreateReply(ctx, rp, authorID); err != nil {
 		return nil, err
 	}
-	return s.repo.GetReplyByID(ctx, replyID)
+	created, err := s.repo.GetReplyByID(ctx, replyID)
+	if err != nil {
+		return nil, err
+	}
+	s.notifyReply(ctx, t, created, parentAuthor)
+	return created, nil
 }
 
 // ListReplies returns a page of replies with viewer like flags.
@@ -220,18 +240,46 @@ func (s *Service) DeleteReply(ctx context.Context, actorID, replyID string) erro
 
 // ToggleTopicLike likes or unlikes a topic.
 func (s *Service) ToggleTopicLike(ctx context.Context, userID, topicID string) (bool, int, error) {
-	if _, err := s.repo.TopicAuthor(ctx, topicID); err != nil {
+	t, err := s.repo.GetTopicByID(ctx, topicID)
+	if err != nil {
 		return false, 0, err
 	}
-	return s.repo.ToggleLike(ctx, userID, TargetTopic, topicID)
+	liked, count, err := s.repo.ToggleLike(ctx, userID, TargetTopic, topicID)
+	if err == nil && liked && s.notify != nil {
+		s.notify.Deliver(ctx, notification.Delivery{
+			Recipients: []string{t.Author.ID},
+			Event: notification.Event{
+				Type: notification.TypeTopicLike, ActorID: userID,
+				EntityType: TargetTopic, EntityID: t.ID,
+				Message: "curtiu seu tópico " + quote(t.Title), Link: topicLink(t.ID, ""),
+			},
+		})
+	}
+	return liked, count, err
 }
 
 // ToggleReplyLike likes or unlikes a reply.
 func (s *Service) ToggleReplyLike(ctx context.Context, userID, replyID string) (bool, int, error) {
-	if _, _, err := s.repo.ReplyMeta(ctx, replyID); err != nil {
+	authorID, topicID, err := s.repo.ReplyMeta(ctx, replyID)
+	if err != nil {
 		return false, 0, err
 	}
-	return s.repo.ToggleLike(ctx, userID, TargetReply, replyID)
+	liked, count, err := s.repo.ToggleLike(ctx, userID, TargetReply, replyID)
+	if err == nil && liked && s.notify != nil {
+		title := ""
+		if t, terr := s.repo.GetTopicByID(ctx, topicID); terr == nil {
+			title = t.Title
+		}
+		s.notify.Deliver(ctx, notification.Delivery{
+			Recipients: []string{authorID},
+			Event: notification.Event{
+				Type: notification.TypeReplyLike, ActorID: userID,
+				EntityType: TargetReply, EntityID: replyID,
+				Message: "curtiu sua resposta em " + quote(title), Link: topicLink(topicID, replyID),
+			},
+		})
+	}
+	return liked, count, err
 }
 
 // ToggleTopicFollow follows or unfollows a topic.
@@ -252,4 +300,4 @@ func validationErr(msg string) error { return &validationError{msg: msg} }
 type validationError struct{ msg string }
 
 func (e *validationError) Error() string { return e.msg }
-func (e *validationError) Unwrap() error  { return apperr.ErrValidation }
+func (e *validationError) Unwrap() error { return apperr.ErrValidation }

@@ -58,7 +58,7 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 	notifySvc := notification.NewService(notifyRepo, notification.NewHub(), logger)
 	userSvc := user.NewService(userRepo)
 	categorySvc := category.NewService(categoryRepo)
-	topicSvc := topic.NewService(topicRepo, rbacSvc)
+	topicSvc := topic.NewService(topicRepo, rbacSvc, notifySvc)
 	authSvc := auth.NewService(userRepo, tokenRepo, rbacSvc, auth.Config{
 		AccessSecret: cfg.JWTAccessSecret,
 		AccessTTL:    cfg.JWTAccessTTL,
