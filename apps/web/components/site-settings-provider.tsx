@@ -31,9 +31,11 @@ export function SiteSettingsProvider({ initial, children }: { initial: SiteSetti
     }
   }, []);
 
+  // The server render may be cached for a few seconds; revalidate on mount so
+  // identity changes show up immediately.
   useEffect(() => {
-    if (Object.keys(initial).length === 0) void refresh();
-  }, [initial, refresh]);
+    void refresh();
+  }, [refresh]);
 
   useEffect(() => {
     const root = document.documentElement;
