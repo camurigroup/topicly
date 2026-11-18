@@ -23,10 +23,11 @@ type Config struct {
 
 // Service implements registration, login and token lifecycle.
 type Service struct {
-	users  *user.Repository
-	tokens *RefreshTokenRepository
-	rbac   *rbac.Service
-	cfg    Config
+	users    *user.Repository
+	tokens   *RefreshTokenRepository
+	rbac     *rbac.Service
+	cfg      Config
+	banCheck BanCheck
 }
 
 // NewService builds the auth Service.
@@ -133,6 +134,9 @@ func (s *Service) Login(ctx context.Context, in LoginInput, userAgent, ip string
 	if u.Status == user.StatusBanned || u.Status == user.StatusDisabled {
 		return nil, apperr.ErrForbidden
 	}
+	if err := s.ensureNotBanned(ctx, u.ID); err != nil {
+		return nil, err
+	}
 
 	_ = s.users.UpdateLastActive(ctx, u.ID, time.Now().UTC())
 	return s.buildResult(ctx, u, userAgent, ip)
@@ -152,6 +156,10 @@ func (s *Service) Refresh(ctx context.Context, rawRefresh, userAgent, ip string)
 	if err != nil {
 		return nil, err
 	}
+	if err := s.ensureNotBanned(ctx, current.UserID); err != nil {
+		_ = s.tokens.Revoke(ctx, current.ID, nil)
+		return nil, err
+	}
 
 	pair, newID, err := s.issueTokens(ctx, current.UserID, userAgent, ip)
 	if err != nil {
@@ -161,6 +169,28 @@ func (s *Service) Refresh(ctx context.Context, rawRefresh, userAgent, ip string)
 		return nil, err
 	}
 	return pair, nil
+}
+
+// SetBanCheck enables refusing logins and token refreshes of banned users.
+func (s *Service) SetBanCheck(check BanCheck) { s.banCheck = check }
+
+// RevokeAllSessions ends every session of a user (used when banning).
+func (s *Service) RevokeAllSessions(ctx context.Context, userID string) error {
+	return s.tokens.RevokeAllForUser(ctx, userID)
+}
+
+func (s *Service) ensureNotBanned(ctx context.Context, userID string) error {
+	if s.banCheck == nil {
+		return nil
+	}
+	msg, banned, err := s.banCheck(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if banned {
+		return &FieldError{Msg: msg, kind: apperr.ErrForbidden}
+	}
+	return nil
 }
 
 // Logout revokes a single refresh token.
