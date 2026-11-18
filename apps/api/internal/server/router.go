@@ -68,6 +68,14 @@ func (s *Server) routes() http.Handler {
 	api.Handle("DELETE /replies/{id}", auth(http.HandlerFunc(s.topic.DeleteReply)))
 	api.Handle("POST /replies/{id}/like", auth(http.HandlerFunc(s.topic.LikeReply)))
 
+	// Social: follow users and categories, follower lists and counters.
+	api.Handle("POST /users/{username}/follow", auth(http.HandlerFunc(s.social.FollowUser)))
+	api.Handle("GET /users/{username}/stats", optional(http.HandlerFunc(s.social.UserStats)))
+	api.HandleFunc("GET /users/{username}/followers", s.social.Followers)
+	api.HandleFunc("GET /users/{username}/following", s.social.Following)
+	api.Handle("POST /categories/{slug}/follow", auth(http.HandlerFunc(s.social.FollowCategory)))
+	api.Handle("GET /categories/{slug}/stats", optional(http.HandlerFunc(s.social.CategoryStats)))
+
 	// Notifications (live stream via SSE).
 	api.Handle("GET /notifications", auth(http.HandlerFunc(s.notify.List)))
 	api.Handle("GET /notifications/unread-count", auth(http.HandlerFunc(s.notify.UnreadCount)))

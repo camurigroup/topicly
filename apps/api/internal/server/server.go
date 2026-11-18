@@ -15,6 +15,7 @@ import (
 	"github.com/forum-framework/api/internal/modules/health"
 	"github.com/forum-framework/api/internal/modules/notification"
 	"github.com/forum-framework/api/internal/modules/rbac"
+	"github.com/forum-framework/api/internal/modules/social"
 	"github.com/forum-framework/api/internal/modules/topic"
 	"github.com/forum-framework/api/internal/modules/user"
 	"github.com/forum-framework/api/internal/storage"
@@ -35,6 +36,7 @@ type Server struct {
 	category    *category.Handler
 	topic       *topic.Handler
 	notify      *notification.Handler
+	social      *social.Handler
 	rbac        *rbac.Service
 }
 
@@ -53,6 +55,7 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 	categoryRepo := category.NewRepository(store)
 	topicRepo := topic.NewRepository(store)
 	notifyRepo := notification.NewRepository(store)
+	socialRepo := social.NewRepository(store)
 
 	rbacSvc := rbac.NewService(rbacRepo)
 	notifySvc := notification.NewService(notifyRepo, notification.NewHub(), logger)
@@ -78,6 +81,7 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 		category:    category.NewHandler(categorySvc),
 		topic:       topic.NewHandler(topicSvc),
 		notify:      notification.NewHandler(notifySvc),
+		social:      social.NewHandler(social.NewService(socialRepo, notifySvc)),
 		rbac:        rbacSvc,
 	}, nil
 }
