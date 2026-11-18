@@ -9,8 +9,10 @@ const (
 	KindText     = "text"
 	KindLongText = "longtext"
 	KindBool     = "bool"
-	KindPath     = "path" // internal path such as /categories
-	KindURL      = "url"  // internal path or absolute http(s) URL
+	KindPath     = "path"  // internal path such as /categories
+	KindURL      = "url"   // internal path or absolute http(s) URL
+	KindColor    = "color" // #rgb or #rrggbb (empty = theme default)
+	KindLinks    = "links" // one "Label|url" per line
 )
 
 // Definition describes one administrable setting.
@@ -53,6 +55,30 @@ var Definitions = []Definition{
 	{"home.show.users", "Mostrar usuários em destaque", "Visibilidade", KindBool, 5, "true"},
 	{"home.show.stats", "Mostrar estatísticas", "Visibilidade", KindBool, 5, "true"},
 	{"home.show.activity", "Mostrar últimas atividades", "Visibilidade", KindBool, 5, "true"},
+
+	// White-label identity (Etapa 6), read by the public layout.
+	{"brand.name", "Nome do fórum", "Identidade", KindText, 60, "Forum"},
+	{"brand.description", "Descrição (SEO)", "Identidade", KindLongText, 300, "Uma comunidade para conversar, aprender e compartilhar."},
+	{"brand.logo", "Logo (URL)", "Identidade", KindURL, 500, ""},
+	{"brand.favicon", "Favicon (URL)", "Identidade", KindURL, 500, ""},
+
+	{"theme.primary", "Cor primária", "Cores", KindColor, 7, ""},
+	{"theme.accent", "Cor de destaque", "Cores", KindColor, 7, ""},
+	{"theme.radius", "Arredondamento (px)", "Cores", KindText, 2, "8"},
+
+	{"social.website", "Site", "Redes sociais", KindURL, 300, ""},
+	{"social.github", "GitHub", "Redes sociais", KindURL, 300, ""},
+	{"social.x", "X / Twitter", "Redes sociais", KindURL, 300, ""},
+	{"social.instagram", "Instagram", "Redes sociais", KindURL, 300, ""},
+	{"social.discord", "Discord", "Redes sociais", KindURL, 300, ""},
+	{"social.youtube", "YouTube", "Redes sociais", KindURL, 300, ""},
+
+	{"footer.text", "Texto do rodapé", "Rodapé", KindText, 200, "Construído com o Forum Framework."},
+	{"footer.links", "Links institucionais (Rótulo|URL, um por linha)", "Rodapé", KindLinks, 2000,
+		"Termos de uso|/terms\nPrivacidade|/privacy"},
+
+	{"legal.terms", "Termos de uso", "Documentos legais", KindLongText, 15000, "Ao usar esta comunidade você concorda em tratar os demais com respeito."},
+	{"legal.privacy", "Política de privacidade", "Documentos legais", KindLongText, 15000, "Coletamos apenas os dados necessários para o funcionamento da conta."},
 }
 
 var definitionByKey = func() map[string]Definition {
@@ -92,11 +118,67 @@ func Normalize(key, value string) (string, error) {
 			return "", validationErr(d.Label + ": use um caminho interno, ex.: /categories")
 		}
 	case KindURL:
-		if v != "" && !isInternalPath(v) && !strings.HasPrefix(v, "https://") && !strings.HasPrefix(v, "http://") {
+		if v != "" && !isSafeURL(v) {
 			return "", validationErr(d.Label + ": use um caminho interno ou uma URL http(s)")
+		}
+	case KindColor:
+		c, ok := normalizeColor(v)
+		if !ok {
+			return "", validationErr(d.Label + ": use uma cor hexadecimal, ex.: #7c3aed")
+		}
+		v = c
+	case KindLinks:
+		if err := validateLinks(v); err != nil {
+			return "", validationErr(d.Label + ": " + err.Error())
 		}
 	}
 	return v, nil
+}
+
+func isSafeURL(v string) bool {
+	return isInternalPath(v) || strings.HasPrefix(v, "https://") || strings.HasPrefix(v, "http://")
+}
+
+// normalizeColor accepts "", #rgb or #rrggbb and returns lowercase #rrggbb.
+func normalizeColor(v string) (string, bool) {
+	if v == "" {
+		return "", true
+	}
+	v = strings.ToLower(v)
+	if !strings.HasPrefix(v, "#") || (len(v) != 4 && len(v) != 7) {
+		return "", false
+	}
+	for _, r := range v[1:] {
+		if !strings.ContainsRune("0123456789abcdef", r) {
+			return "", false
+		}
+	}
+	if len(v) == 4 {
+		v = "#" + strings.Repeat(v[1:2], 2) + strings.Repeat(v[2:3], 2) + strings.Repeat(v[3:4], 2)
+	}
+	return v, true
+}
+
+type linksError string
+
+func (e linksError) Error() string { return string(e) }
+
+// validateLinks checks "Label|url" lines with safe URLs.
+func validateLinks(v string) error {
+	for _, line := range strings.Split(v, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		label, url, ok := strings.Cut(line, "|")
+		if !ok || strings.TrimSpace(label) == "" {
+			return linksError("use o formato Rótulo|URL em cada linha")
+		}
+		if !isSafeURL(strings.TrimSpace(url)) {
+			return linksError("URL inválida em \"" + strings.TrimSpace(label) + "\"")
+		}
+	}
+	return nil
 }
 
 func isInternalPath(v string) bool {
