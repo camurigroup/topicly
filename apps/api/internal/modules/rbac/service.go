@@ -19,12 +19,20 @@ func NewService(repo *Repository) *Service {
 
 // PermissionsForUser returns the active permission slugs for a user.
 func (s *Service) PermissionsForUser(ctx context.Context, userID string) ([]string, error) {
-	return s.repo.PermissionSlugsForUser(ctx, userID)
+	return nonNil(s.repo.PermissionSlugsForUser(ctx, userID))
 }
 
 // RolesForUser returns the role slugs assigned to a user.
 func (s *Service) RolesForUser(ctx context.Context, userID string) ([]string, error) {
-	return s.repo.RoleSlugsForUser(ctx, userID)
+	return nonNil(s.repo.RoleSlugsForUser(ctx, userID))
+}
+
+// nonNil turns a nil slice into an empty one so JSON encodes [] (not null).
+func nonNil(s []string, err error) ([]string, error) {
+	if s == nil && err == nil {
+		s = []string{}
+	}
+	return s, err
 }
 
 // HasPermission reports whether a user holds a given permission slug.
