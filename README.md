@@ -8,7 +8,7 @@ Framework de fórum **white-label**, modular e pronto para uso.
 - **Cache:** Redis opcional (há fallback interno)
 - **Storage:** Local **ou** MinIO (S3)
 
-O plano completo por etapas está em [ROADMAP.md](ROADMAP.md).
+O plano completo por etapas está em [ROADMAP.md](ROADMAP.md). **Instalação e configuração:** [docs/INSTALL.md](docs/INSTALL.md) · **Referência da API:** [docs/openapi.yaml](docs/openapi.yaml).
 
 ## Estrutura
 
@@ -55,3 +55,5 @@ Em construção — ver [ROADMAP.md](ROADMAP.md).
   - Banimento vale na hora (inclusive com token ainda válido) e encerra as sessões; silenciado continua lendo, mas não publica, curte nem segue.
   - O estado de ban/mute fica em cache por até 15 s por instância; alterações feitas pela própria instância invalidam o cache na hora.
 - ✅ **Etapa 6 — Painel administrativo** (`/admin`): layout com navegação lateral filtrada por permissão; dashboard com métricas reais do banco (usuários, ativos, novos, categorias, subcategorias, tópicos, respostas, curtidas, denúncias, banidos, silenciados, advertências) e gráfico de crescimento diário/semanal/mensal; listagens com busca, filtros, ordenação (allowlist no backend) e paginação para usuários, tópicos, respostas, categorias, denúncias, banimentos/mutes, advertências e auditoria; armazenamento (sem expor segredos); identidade white-label — nome, descrição, logo e favicon (upload), cores, arredondamento, redes sociais, rodapé com links institucionais, termos e privacidade (`/terms`, `/privacy`) — refletida no fórum público sem tocar no código. Verificada em PostgreSQL (62/62 checagens ponta a ponta).
+- ✅ **Etapa 7 — Finalização e instalação**: instalador de linha de comando (banco PostgreSQL/MariaDB, armazenamento, segredos fortes, migrations, `.env`; não roda de novo sem `-force`) e assistente web `/install` (identidade + conta do Dono, com `INSTALL_TOKEN`; trava após concluir e bloqueia o cadastro público até lá); API lê `.env` e recusa iniciar em produção com segredos fracos; cabeçalhos HTTP defensivos; guia de instalação, OpenAPI gerada das rotas (83 operações) e roteiro e2e (62 verificações). Instalação limpa testada do zero em PostgreSQL.
+  - Pendente: validação em MariaDB (as migrations e consultas suportam os dois bancos; o teste depende de um servidor MariaDB acessível).
