@@ -7,7 +7,7 @@ Instale, escolha o banco, crie a conta do Dono, personalize a identidade — e a
 
 `Go` · `Next.js 15` · `React 19` · `TypeScript` · `Tailwind` · `PostgreSQL` **ou** `MariaDB` · `Local` **ou** `MinIO/S3`
 
-[Instalação](docs/INSTALL.md) · [Referência da API (OpenAPI)](docs/openapi.yaml) · [Roadmap](ROADMAP.md)
+[Instalação](docs/INSTALL.md) · [Referência da API (OpenAPI)](docs/openapi.yaml) · [Roadmap](ROADMAP.md) · [Contribuir](CONTRIBUTING.md) · [Segurança](SECURITY.md) · [Licença AGPL-3.0](LICENSE)
 
 </div>
 
@@ -30,6 +30,7 @@ Instale, escolha o banco, crie a conta do Dono, personalize a identidade — e a
 13. [Testes e qualidade](#testes-e-qualidade)
 14. [Estrutura do repositório](#estrutura-do-repositório)
 15. [Status do projeto](#status-do-projeto)
+16. [Licença e marca](#licença-e-marca)
 
 ---
 
@@ -389,3 +390,18 @@ completa de verificação em MariaDB está pendente.
 > **Observações de operação:** o tempo real usa um hub em memória (sem Redis) — com várias
 > instâncias da API, cada uma entrega só às próprias conexões. O estado de banimento e
 > silenciamento fica em cache por até 15 s por instância.
+
+## Licença e marca
+
+O Topicly é software livre sob a **[GNU AGPL-3.0](LICENSE)** — veja também o [NOTICE](NOTICE).
+Se você modificar o Topicly e oferecê-lo pela rede, precisa disponibilizar o código-fonte
+da sua versão aos usuários (seção 13 da AGPL).
+
+| Documento | Conteúdo |
+|---|---|
+| [LICENSE](LICENSE) | Texto integral da GNU AGPL-3.0 |
+| [NOTICE](NOTICE) | Direitos autorais e componentes de terceiros |
+| [TRADEMARK.md](TRADEMARK.md) | Uso da marca Topicly (o white-label do seu fórum continua livre) |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Como contribuir |
+| [SECURITY.md](SECURITY.md) | Como reportar vulnerabilidades |
+| [PRIVACY.md](PRIVACY.md) | Sem telemetria; dados ficam na sua instalação |
