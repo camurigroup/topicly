@@ -1,6 +1,7 @@
 package site
 
 import (
+	"encoding/json"
 	"strings"
 )
 
@@ -9,10 +10,11 @@ const (
 	KindText     = "text"
 	KindLongText = "longtext"
 	KindBool     = "bool"
-	KindPath     = "path"  // internal path such as /categories
-	KindURL      = "url"   // internal path or absolute http(s) URL
-	KindColor    = "color" // #rgb or #rrggbb (empty = theme default)
-	KindLinks    = "links" // one "Label|url" per line
+	KindPath     = "path"   // internal path such as /categories
+	KindURL      = "url"    // internal path or absolute http(s) URL
+	KindColor    = "color"  // #rgb or #rrggbb (empty = theme default)
+	KindLinks    = "links"  // one "Label|url" per line
+	KindLayout   = "layout" // JSON list of home widgets (see layout.go)
 )
 
 // Definition describes one administrable setting.
@@ -55,6 +57,9 @@ var Definitions = []Definition{
 	{"home.show.users", "Mostrar usuários em destaque", "Visibilidade", KindBool, 5, "true"},
 	{"home.show.stats", "Mostrar estatísticas", "Visibilidade", KindBool, 5, "true"},
 	{"home.show.activity", "Mostrar últimas atividades", "Visibilidade", KindBool, 5, "true"},
+
+	// Home page layout: which blocks appear, where, how and from which source.
+	{"home.layout", "Layout da página inicial", "Layout", KindLayout, 20000, defaultLayoutJSON()},
 
 	// White-label identity (Etapa 6), read by the public layout.
 	{"brand.name", "Nome do fórum", "Identidade", KindText, 60, "Forum"},
@@ -127,6 +132,13 @@ func Normalize(key, value string) (string, error) {
 			return "", validationErr(d.Label + ": use uma cor hexadecimal, ex.: #7c3aed")
 		}
 		v = c
+	case KindLayout:
+		ws, err := ParseLayout(v)
+		if err != nil {
+			return "", err
+		}
+		b, _ := json.Marshal(ws)
+		v = string(b)
 	case KindLinks:
 		if err := validateLinks(v); err != nil {
 			return "", validationErr(d.Label + ": " + err.Error())
