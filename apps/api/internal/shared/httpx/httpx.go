@@ -2,16 +2,32 @@
 package httpx
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"io"
 	"net"
 	"net/http"
 	"strings"
+	"unicode/utf8"
 )
 
-// DecodeJSON decodes the request body into dst. It rejects unknown fields and
-// oversized bodies. Returns an error the caller maps to a 400 response.
+// ErrInvalidUTF8 is returned for bodies that are not valid UTF-8. Go's JSON
+// decoder would otherwise silently replace the bad bytes with U+FFFD and the
+// text would be stored corrupted (e.g. "AnFFFDncios").
+var ErrInvalidUTF8 = errors.New("o texto enviado não está em UTF-8")
+
+// DecodeJSON decodes the request body into dst. It rejects unknown fields,
+// oversized bodies and invalid UTF-8. Returns an error the caller maps to 400.
 func DecodeJSON(r *http.Request, dst any, maxBytes int64) error {
-	dec := json.NewDecoder(http.MaxBytesReader(nil, r.Body, maxBytes))
+	body, err := io.ReadAll(http.MaxBytesReader(nil, r.Body, maxBytes))
+	if err != nil {
+		return err
+	}
+	if !utf8.Valid(body) {
+		return ErrInvalidUTF8
+	}
+	dec := json.NewDecoder(bytes.NewReader(body))
 	dec.DisallowUnknownFields()
 	return dec.Decode(dst)
 }
