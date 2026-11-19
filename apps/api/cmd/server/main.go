@@ -18,7 +18,19 @@ import (
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	envFile := os.Getenv("ENV_FILE")
+	if envFile == "" {
+		envFile = ".env"
+	}
+	if err := config.LoadDotEnv(envFile); err != nil {
+		logger.Error("could not read env file", "file", envFile, "error", err)
+		os.Exit(1)
+	}
 	cfg := config.Load()
+	if err := cfg.Validate(); err != nil {
+		logger.Error("invalid configuration", "error", err)
+		os.Exit(1)
+	}
 
 	dialect, err := database.Dialect(cfg.DB.Driver)
 	if err != nil {
