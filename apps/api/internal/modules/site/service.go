@@ -73,65 +73,14 @@ func (s *Service) UpdateSettings(ctx context.Context, in map[string]string) (map
 
 // Home is everything the home page renders, in one response.
 type Home struct {
-	Settings      map[string]string   `json:"settings"`
-	Stats         *Stats              `json:"stats,omitempty"`
-	Categories    []category.Category `json:"categories"`
-	Featured      []topic.Topic       `json:"featuredTopics"`
-	Recent        []topic.Topic       `json:"recentTopics"`
-	Popular       []topic.Topic       `json:"popularTopics"`
-	FeaturedUsers []FeaturedUser      `json:"featuredUsers"`
-	Activity      []Activity          `json:"activity"`
-}
-
-// Home assembles the home page, querying only the sections that are enabled.
-func (s *Service) Home(ctx context.Context) (*Home, error) {
-	settings, err := s.Settings(ctx)
-	if err != nil {
-		return nil, err
-	}
-	h := &Home{
-		Settings:      settings,
-		Categories:    []category.Category{},
-		Featured:      []topic.Topic{},
-		Recent:        []topic.Topic{},
-		Popular:       []topic.Topic{},
-		FeaturedUsers: []FeaturedUser{},
-		Activity:      []Activity{},
-	}
-	if Bool(settings, "home.show.stats") {
-		if h.Stats, err = s.repo.Stats(ctx); err != nil {
-			return nil, err
-		}
-	}
-	if Bool(settings, "home.show.categories") {
-		if h.Categories, err = s.categories.List(ctx, true); err != nil {
-			return nil, err
-		}
-	}
-	if Bool(settings, "home.show.featured") {
-		if h.Featured, err = s.topics.Featured(ctx, homeFeatured); err != nil {
-			return nil, err
-		}
-	}
-	if Bool(settings, "home.show.recent") {
-		if h.Recent, _, err = s.topics.Discover(ctx, topic.DiscoverRecent, homeTopics, 0); err != nil {
-			return nil, err
-		}
-	}
-	if Bool(settings, "home.show.popular") {
-		if h.Popular, _, err = s.topics.Discover(ctx, topic.DiscoverPopular, homeTopics, 0); err != nil {
-			return nil, err
-		}
-	}
-	if Bool(settings, "home.show.users") {
-		if h.FeaturedUsers, err = s.repo.FeaturedUsers(ctx, homeUsers); err != nil {
-			return nil, err
-		}
-	}
-	if Bool(settings, "home.show.activity") {
-		if h.Activity, err = s.repo.RecentActivity(ctx, homeActivities); err != nil {
-			return nil, err
-		}
-	}
-	return h, nil
+	Settings      map[string]string        `json:"settings"`
+	Stats         *Stats                   `json:"stats,omitempty"`
+	Categories    []category.Category      `json:"categories"`
+	Featured      []topic.Topic            `json:"featuredTopics"`
+	Recent        []topic.Topic            `json:"recentTopics"`
+	Popular       []topic.Topic            `json:"popularTopics"`
+	FeaturedUsers []FeaturedUser           `json:"featuredUsers"`
+	Activity      []Activity               `json:"activity"`
+	Layout        []Widget                 `json:"layout"`
+	Feeds         map[string][]topic.Topic `json:"feeds"`
 }
