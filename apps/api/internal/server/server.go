@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/forum-framework/api/internal/config"
@@ -15,6 +16,7 @@ import (
 	"github.com/forum-framework/api/internal/modules/auth"
 	"github.com/forum-framework/api/internal/modules/category"
 	"github.com/forum-framework/api/internal/modules/health"
+	"github.com/forum-framework/api/internal/modules/install"
 	"github.com/forum-framework/api/internal/modules/moderation"
 	"github.com/forum-framework/api/internal/modules/notification"
 	"github.com/forum-framework/api/internal/modules/rbac"
@@ -53,6 +55,8 @@ type Server struct {
 	auditSvc    *audit.Service
 	reportLimit *middleware.RateLimiter
 	admin       *admin.Handler
+	install     *install.Handler
+	installSvc  *install.Service
 }
 
 // New builds the Server and all module dependencies for the given dialect.
@@ -107,6 +111,8 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 		return u.ID, nil
 	}
 
+	installSvc := install.NewService(store, authSvc, siteSvc, categorySvc, os.Getenv("INSTALL_TOKEN"))
+
 	return &Server{
 		cfg:         cfg,
 		db:          db,
@@ -132,6 +138,8 @@ func New(cfg config.Config, db *sql.DB, dialect string, logger *slog.Logger) (*S
 		auditSvc:    auditSvc,
 		reportLimit: middleware.NewRateLimiter(10, time.Minute),
 		admin:       admin.NewHandler(admin.NewService(admin.NewRepository(store), cfg.Storage), fileStore),
+		install:     install.NewHandler(installSvc),
+		installSvc:  installSvc,
 	}, nil
 }
 
@@ -143,6 +151,11 @@ func (s *Server) Seed(ctx context.Context) error {
 	}
 	if err := s.siteSvc.Seed(ctx); err != nil {
 		return err
+	}
+	if marked, err := s.installSvc.Reconcile(ctx); err != nil {
+		return err
+	} else if marked {
+		s.logger.Info("existing database marked as installed")
 	}
 	n, err := s.normalizeMediaURLs(ctx)
 	if err != nil {

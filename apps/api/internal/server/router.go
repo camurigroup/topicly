@@ -25,7 +25,11 @@ func (s *Server) routes() http.Handler {
 
 	// Auth (public, rate-limited).
 	limit := s.authLimiter.Limit
-	api.Handle("POST /auth/register", limit(http.HandlerFunc(s.auth.Register)))
+	api.Handle("POST /auth/register", limit(s.install.RequireInstalled(http.HandlerFunc(s.auth.Register))))
+
+	// Installer (first run only; locked once the Owner exists).
+	api.HandleFunc("GET /install/status", s.install.Status)
+	api.Handle("POST /install", limit(http.HandlerFunc(s.install.Complete)))
 	api.Handle("POST /auth/login", limit(http.HandlerFunc(s.auth.Login)))
 	api.Handle("POST /auth/refresh", limit(http.HandlerFunc(s.auth.Refresh)))
 	api.HandleFunc("POST /auth/logout", s.auth.Logout)
