@@ -1,0 +1,877 @@
+openapi: 3.0.3
+info:
+  title: Forum Framework API
+  version: "1.0.0"
+  description: |
+    API REST do Forum Framework. Todas as respostas usam o envelope
+    {success, data, error, meta}. Rotas protegidas usam Bearer JWT
+    (POST /auth/login). Este arquivo é gerado por scripts/gen-openapi.mjs.
+servers:
+  - url: http://localhost:8080/api/v1
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Envelope:
+      type: object
+      properties:
+        success: { type: boolean }
+        data: {}
+        error:
+          type: object
+          nullable: true
+          properties:
+            code: { type: string }
+            message: { type: string }
+        meta:
+          type: object
+          nullable: true
+          properties:
+            total: { type: integer }
+            page: { type: integer }
+            limit: { type: integer }
+  responses:
+    Ok:
+      description: Sucesso
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Envelope" }
+    Error:
+      description: Erro (400 corpo inválido, 401, 403, 404, 409, 422 validação, 429 limite)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Envelope" }
+paths:
+  /admin/audit:
+    get:
+      tags: ["admin/audit"]
+      summary: "list"
+      operationId: "get_admin_audit"
+      description: "Permissão exigida: logs.view."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/audit/actions:
+    get:
+      tags: ["admin/audit"]
+      summary: "actions"
+      operationId: "get_admin_audit_actions"
+      description: "Permissão exigida: logs.view."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/categories:
+    get:
+      tags: ["admin/categories"]
+      summary: "list all"
+      operationId: "get_admin_categories"
+      description: "Permissão exigida: categories.manage."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/metrics:
+    get:
+      tags: ["admin/metrics"]
+      summary: "metrics"
+      operationId: "get_admin_metrics"
+      description: "Permissão exigida: metrics.view."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/metrics/series:
+    get:
+      tags: ["admin/metrics"]
+      summary: "series"
+      operationId: "get_admin_metrics_series"
+      description: "Permissão exigida: metrics.view."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/notifications:
+    post:
+      tags: ["admin/notifications"]
+      summary: "broadcast"
+      operationId: "post_admin_notifications"
+      description: "Permissão exigida: settings.manage."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/permissions:
+    get:
+      tags: ["admin/permissions"]
+      summary: "perm permissions manage"
+      operationId: "get_admin_permissions"
+      description: "Permissão (qualquer uma): roles.manage, permissions.manage."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: ["admin/permissions"]
+      summary: "create permission"
+      operationId: "post_admin_permissions"
+      description: "Permissão exigida: permissions.manage."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/permissions/{id}:
+    patch:
+      tags: ["admin/permissions"]
+      summary: "set permission active"
+      operationId: "patch_admin_permissions_id"
+      description: "Permissão exigida: permissions.manage."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: ["admin/permissions"]
+      summary: "delete permission"
+      operationId: "delete_admin_permissions_id"
+      description: "Permissão exigida: permissions.manage."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/replies:
+    get:
+      tags: ["admin/replies"]
+      summary: "perm replies delete"
+      operationId: "get_admin_replies"
+      description: "Permissão (qualquer uma): replies.edit, replies.delete."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/reports:
+    get:
+      tags: ["admin/reports"]
+      summary: "list reports"
+      operationId: "get_admin_reports"
+      description: "Permissão exigida: reports.manage."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/reports/counts:
+    get:
+      tags: ["admin/reports"]
+      summary: "report counts"
+      operationId: "get_admin_reports_counts"
+      description: "Permissão exigida: reports.manage."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/reports/{id}:
+    patch:
+      tags: ["admin/reports"]
+      summary: "update report"
+      operationId: "patch_admin_reports_id"
+      description: "Permissão exigida: reports.manage."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/roles:
+    get:
+      tags: ["admin/roles"]
+      summary: "list roles"
+      operationId: "get_admin_roles"
+      description: "Permissão exigida: roles.manage."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: ["admin/roles"]
+      summary: "create role"
+      operationId: "post_admin_roles"
+      description: "Permissão exigida: roles.manage."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/roles/{id}:
+    patch:
+      tags: ["admin/roles"]
+      summary: "update role"
+      operationId: "patch_admin_roles_id"
+      description: "Permissão exigida: roles.manage."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: ["admin/roles"]
+      summary: "delete role"
+      operationId: "delete_admin_roles_id"
+      description: "Permissão exigida: roles.manage."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/roles/{id}/permissions:
+    put:
+      tags: ["admin/roles"]
+      summary: "set role permissions"
+      operationId: "put_admin_roles_id_permissions"
+      description: "Permissão exigida: roles.manage."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/sanctions:
+    get:
+      tags: ["admin/sanctions"]
+      summary: "perm users mute"
+      operationId: "get_admin_sanctions"
+      description: "Permissão (qualquer uma): users.ban, users.mute."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/sanctions/{id}/revoke:
+    post:
+      tags: ["admin/sanctions"]
+      summary: "perm users mute"
+      operationId: "post_admin_sanctions_id_revoke"
+      description: "Permissão (qualquer uma): users.ban, users.mute."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/site/assets:
+    post:
+      tags: ["admin/site"]
+      summary: "upload asset"
+      operationId: "post_admin_site_assets"
+      description: "Permissão exigida: settings.manage."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/site/settings:
+    get:
+      tags: ["admin/site"]
+      summary: "admin settings"
+      operationId: "get_admin_site_settings"
+      description: "Permissão exigida: settings.manage."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+    put:
+      tags: ["admin/site"]
+      summary: "update settings"
+      operationId: "put_admin_site_settings"
+      description: "Permissão exigida: settings.manage."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/storage:
+    get:
+      tags: ["admin/storage"]
+      summary: "storage"
+      operationId: "get_admin_storage"
+      description: "Permissão exigida: storage.manage."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/users/{username}/ban:
+    post:
+      tags: ["admin/users"]
+      summary: "ban"
+      operationId: "post_admin_users_username_ban"
+      description: "Permissão exigida: users.ban."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: username, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/users/{username}/moderation:
+    get:
+      tags: ["admin/users"]
+      summary: ""
+      operationId: "get_admin_users_username_moderation"
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: username, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/users/{username}/mute:
+    post:
+      tags: ["admin/users"]
+      summary: "mute"
+      operationId: "post_admin_users_username_mute"
+      description: "Permissão exigida: users.mute."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: username, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/users/{username}/roles:
+    get:
+      tags: ["admin/users"]
+      summary: "user roles"
+      operationId: "get_admin_users_username_roles"
+      description: "Permissão exigida: roles.manage."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: username, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+    put:
+      tags: ["admin/users"]
+      summary: "set user roles"
+      operationId: "put_admin_users_username_roles"
+      description: "Permissão exigida: roles.manage."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: username, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/users/{username}/warnings:
+    post:
+      tags: ["admin/users"]
+      summary: "warn"
+      operationId: "post_admin_users_username_warnings"
+      description: "Permissão exigida: warnings.apply."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: username, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /admin/warnings:
+    get:
+      tags: ["admin/warnings"]
+      summary: "perm users mute"
+      operationId: "get_admin_warnings"
+      description: "Permissão (qualquer uma): warnings.apply, users.ban, users.mute."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/login:
+    post:
+      tags: ["auth"]
+      summary: "login"
+      operationId: "post_auth_login"
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/logout:
+    post:
+      tags: ["auth"]
+      summary: "logout"
+      operationId: "post_auth_logout"
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/refresh:
+    post:
+      tags: ["auth"]
+      summary: "refresh"
+      operationId: "post_auth_refresh"
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/register:
+    post:
+      tags: ["auth"]
+      summary: "register"
+      operationId: "post_auth_register"
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /categories:
+    get:
+      tags: ["categories"]
+      summary: "list"
+      operationId: "get_categories"
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: ["categories"]
+      summary: "create"
+      operationId: "post_categories"
+      description: "Permissão exigida: categories.manage."
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /categories/{id}:
+    patch:
+      tags: ["categories"]
+      summary: "update"
+      operationId: "patch_categories_id"
+      description: "Permissão exigida: categories.manage."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: ["categories"]
+      summary: "delete"
+      operationId: "delete_categories_id"
+      description: "Permissão exigida: categories.manage."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /categories/{slug}:
+    get:
+      tags: ["categories"]
+      summary: "get by slug"
+      operationId: "get_categories_slug"
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /categories/{slug}/follow:
+    post:
+      tags: ["categories"]
+      summary: "follow category"
+      operationId: "post_categories_slug_follow"
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /categories/{slug}/stats:
+    get:
+      tags: ["categories"]
+      summary: "category stats"
+      operationId: "get_categories_slug_stats"
+      description: "Autenticação opcional (enriquece a resposta para usuários logados)."
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /discover:
+    get:
+      tags: ["discover"]
+      summary: "discover"
+      operationId: "get_discover"
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /home:
+    get:
+      tags: ["home"]
+      summary: "home"
+      operationId: "get_home"
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /install:
+    post:
+      tags: ["install"]
+      summary: "complete"
+      operationId: "post_install"
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /install/status:
+    get:
+      tags: ["install"]
+      summary: "status"
+      operationId: "get_install_status"
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /me:
+    get:
+      tags: ["me"]
+      summary: "me"
+      operationId: "get_me"
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+    patch:
+      tags: ["me"]
+      summary: "update profile"
+      operationId: "patch_me"
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /me/avatar:
+    post:
+      tags: ["me"]
+      summary: "upload avatar"
+      operationId: "post_me_avatar"
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /me/banner:
+    post:
+      tags: ["me"]
+      summary: "upload banner"
+      operationId: "post_me_banner"
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /me/email:
+    put:
+      tags: ["me"]
+      summary: "change email"
+      operationId: "put_me_email"
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /me/password:
+    put:
+      tags: ["me"]
+      summary: "change password"
+      operationId: "put_me_password"
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /notifications:
+    get:
+      tags: ["notifications"]
+      summary: "list"
+      operationId: "get_notifications"
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /notifications/read-all:
+    put:
+      tags: ["notifications"]
+      summary: "mark all read"
+      operationId: "put_notifications_read_all"
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /notifications/stream:
+    get:
+      tags: ["notifications"]
+      summary: "stream"
+      operationId: "get_notifications_stream"
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /notifications/unread-count:
+    get:
+      tags: ["notifications"]
+      summary: "unread count"
+      operationId: "get_notifications_unread_count"
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /notifications/{id}:
+    delete:
+      tags: ["notifications"]
+      summary: "delete"
+      operationId: "delete_notifications_id"
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /notifications/{id}/read:
+    put:
+      tags: ["notifications"]
+      summary: "mark read"
+      operationId: "put_notifications_id_read"
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /ping:
+    get:
+      tags: ["ping"]
+      summary: "ping"
+      operationId: "get_ping"
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /replies/{id}:
+    patch:
+      tags: ["replies"]
+      summary: "update reply"
+      operationId: "patch_replies_id"
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: ["replies"]
+      summary: "delete reply"
+      operationId: "delete_replies_id"
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /replies/{id}/like:
+    post:
+      tags: ["replies"]
+      summary: "like reply"
+      operationId: "post_replies_id_like"
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /reports:
+    post:
+      tags: ["reports"]
+      summary: "create report"
+      operationId: "post_reports"
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /search:
+    get:
+      tags: ["search"]
+      summary: "search"
+      operationId: "get_search"
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /site/settings:
+    get:
+      tags: ["site"]
+      summary: "settings"
+      operationId: "get_site_settings"
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /topics:
+    get:
+      tags: ["topics"]
+      summary: "list topics"
+      operationId: "get_topics"
+      description: "Autenticação opcional (enriquece a resposta para usuários logados)."
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: ["topics"]
+      summary: "create topic"
+      operationId: "post_topics"
+      security: [{ bearer: [] }]
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /topics/{id}:
+    get:
+      tags: ["topics"]
+      summary: "get topic"
+      operationId: "get_topics_id"
+      description: "Autenticação opcional (enriquece a resposta para usuários logados)."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+    patch:
+      tags: ["topics"]
+      summary: "update topic"
+      operationId: "patch_topics_id"
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: ["topics"]
+      summary: "delete topic"
+      operationId: "delete_topics_id"
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /topics/{id}/feature:
+    put:
+      tags: ["topics"]
+      summary: "feature"
+      operationId: "put_topics_id_feature"
+      description: "Permissão exigida: topics.pin."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /topics/{id}/follow:
+    post:
+      tags: ["topics"]
+      summary: "follow topic"
+      operationId: "post_topics_id_follow"
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /topics/{id}/like:
+    post:
+      tags: ["topics"]
+      summary: "like topic"
+      operationId: "post_topics_id_like"
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /topics/{id}/lock:
+    put:
+      tags: ["topics"]
+      summary: "lock"
+      operationId: "put_topics_id_lock"
+      description: "Permissão exigida: topics.lock."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /topics/{id}/pin:
+    put:
+      tags: ["topics"]
+      summary: "pin"
+      operationId: "put_topics_id_pin"
+      description: "Permissão exigida: topics.pin."
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /topics/{id}/replies:
+    get:
+      tags: ["topics"]
+      summary: "list replies"
+      operationId: "get_topics_id_replies"
+      description: "Autenticação opcional (enriquece a resposta para usuários logados)."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: ["topics"]
+      summary: "create reply"
+      operationId: "post_topics_id_replies"
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /users/{username}:
+    get:
+      tags: ["users"]
+      summary: "public profile"
+      operationId: "get_users_username"
+      parameters:
+        - { name: username, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /users/{username}/follow:
+    post:
+      tags: ["users"]
+      summary: "follow user"
+      operationId: "post_users_username_follow"
+      security: [{ bearer: [] }]
+      parameters:
+        - { name: username, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /users/{username}/followers:
+    get:
+      tags: ["users"]
+      summary: "followers"
+      operationId: "get_users_username_followers"
+      parameters:
+        - { name: username, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /users/{username}/following:
+    get:
+      tags: ["users"]
+      summary: "following"
+      operationId: "get_users_username_following"
+      parameters:
+        - { name: username, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
+  /users/{username}/stats:
+    get:
+      tags: ["users"]
+      summary: "user stats"
+      operationId: "get_users_username_stats"
+      description: "Autenticação opcional (enriquece a resposta para usuários logados)."
+      parameters:
+        - { name: username, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { $ref: "#/components/responses/Ok" }
+        default: { $ref: "#/components/responses/Error" }
