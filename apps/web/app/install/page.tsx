@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth-provider";
+import { useSiteSettings } from "@/components/site-settings-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,7 @@ const STEPS = [
 export default function InstallPage() {
   const router = useRouter();
   const { refresh } = useAuth();
+  const { refresh: refreshSite } = useSiteSettings();
   const [status, setStatus] = useState<InstallStatus | null>(null);
   const [form, setForm] = useState({
     forumName: "",
@@ -65,7 +67,7 @@ export default function InstallPage() {
         token: form.token || undefined,
       });
       tokens.set(data.tokens.accessToken, data.tokens.refreshToken);
-      await refresh();
+      await Promise.all([refresh(), refreshSite()]);
       router.replace("/admin/settings");
     } catch (err) {
       setError(err instanceof Error ? err.message : "falha na instalação");
