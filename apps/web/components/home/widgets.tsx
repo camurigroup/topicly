@@ -1,6 +1,16 @@
 "use client";
 
-import { Activity as ActivityIcon, Eye, Folder, Heart, MessageSquare, MessagesSquare, Settings2, Sparkles, Users } from "lucide-react";
+import {
+  Activity as ActivityIcon,
+  Eye,
+  Folder,
+  Heart,
+  MessageSquare,
+  MessagesSquare,
+  Settings2,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 
 import { TopicRow } from "@/components/topic-row";
@@ -36,7 +46,17 @@ export function HomeBlock(props: BlockProps) {
   }
 }
 
-function Block({ title, action, children, className }: { title?: string; action?: React.ReactNode; children: React.ReactNode; className?: string }) {
+function Block({
+  title,
+  action,
+  children,
+  className,
+}: {
+  title?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <section className={cn("space-y-3", className)}>
       {(title || action) && (
@@ -56,13 +76,17 @@ function Block({ title, action, children, className }: { title?: string; action?
 }
 
 const Empty = ({ text }: { text: string }) => (
-  <p className="rounded-xl border border-dashed border-border py-8 text-center text-sm text-muted-foreground">{text}</p>
+  <p className="rounded-xl border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
+    {text}
+  </p>
 );
 
 function Hero({ w, home, user, canCustomize }: BlockProps) {
   const s = home.settings;
   const compact = w.variant === "compact";
-  const welcome = user ? s["home.welcome.member"]?.replaceAll("{name}", user.displayName) : null;
+  const welcome = user
+    ? s["home.welcome.member"]?.replaceAll("{name}", user.displayName)
+    : null;
   const image = s["home.banner.image"];
   return (
     <section
@@ -88,7 +112,12 @@ function Hero({ w, home, user, canCustomize }: BlockProps) {
         </div>
       )}
       {canCustomize && (
-        <Button variant="outline" size="sm" className="absolute right-4 top-4 z-10 bg-background/70 backdrop-blur" asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="absolute right-4 top-4 z-10 bg-background/70 backdrop-blur"
+          asChild
+        >
           <Link href="/admin/home">
             <Settings2 className="h-4 w-4" />
             Personalizar
@@ -102,12 +131,25 @@ function Hero({ w, home, user, canCustomize }: BlockProps) {
             {welcome}
           </p>
         )}
-        <h1 className={cn("font-bold tracking-tight", compact ? "text-3xl" : "text-4xl sm:text-6xl")}>{s["home.banner.title"]}</h1>
-        {s["home.banner.subtitle"] && <p className="text-lg text-muted-foreground">{s["home.banner.subtitle"]}</p>}
+        <h1
+          className={cn(
+            "font-bold tracking-tight",
+            compact ? "text-3xl" : "text-4xl sm:text-6xl",
+          )}
+        >
+          {s["home.banner.title"]}
+        </h1>
+        {s["home.banner.subtitle"] && (
+          <p className="text-lg text-muted-foreground">
+            {s["home.banner.subtitle"]}
+          </p>
+        )}
         <div className="flex flex-wrap gap-3 pt-1">
           {s["home.banner.ctaLabel"] && (
             <Button asChild>
-              <Link href={s["home.banner.ctaLink"] || "/categories"}>{s["home.banner.ctaLabel"]}</Link>
+              <Link href={s["home.banner.ctaLink"] || "/categories"}>
+                {s["home.banner.ctaLabel"]}
+              </Link>
             </Button>
           )}
           {!user && (
@@ -125,10 +167,20 @@ function Intro({ w, home }: BlockProps) {
   const s = home.settings;
   const text = s["home.intro.text"];
   if (!text && !w.title && !s["home.intro.title"]) return null;
-  const body = <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{text}</p>;
+  const body = (
+    <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+      {text}
+    </p>
+  );
   return (
     <Block title={w.title || s["home.intro.title"]}>
-      {w.variant === "card" ? <div className="rounded-xl border border-border bg-card p-4">{body}</div> : body}
+      {w.variant === "card" ? (
+        <div className="rounded-xl border border-border bg-card p-4">
+          {body}
+        </div>
+      ) : (
+        body
+      )}
     </Block>
   );
 }
@@ -147,12 +199,17 @@ function Stats({ w, home }: BlockProps) {
       {w.variant === "list" ? (
         <dl className="divide-y divide-border rounded-xl border border-border bg-card">
           {items.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="flex items-center justify-between px-4 py-2.5 text-sm">
+            <div
+              key={label}
+              className="flex items-center justify-between px-4 py-2.5 text-sm"
+            >
               <dt className="flex items-center gap-2 text-muted-foreground">
                 <Icon className="h-4 w-4 text-primary" />
                 {label}
               </dt>
-              <dd className="font-semibold tabular-nums">{formatCount(value)}</dd>
+              <dd className="font-semibold tabular-nums">
+                {formatCount(value)}
+              </dd>
             </div>
           ))}
         </dl>
@@ -164,7 +221,9 @@ function Stats({ w, home }: BlockProps) {
                 <Icon className="h-3.5 w-3.5 text-primary" />
                 {label}
               </dt>
-              <dd className="mt-1 text-2xl font-bold tabular-nums">{formatCount(value)}</dd>
+              <dd className="mt-1 text-2xl font-bold tabular-nums">
+                {formatCount(value)}
+              </dd>
             </div>
           ))}
         </dl>
@@ -174,25 +233,44 @@ function Stats({ w, home }: BlockProps) {
 }
 
 function Categories({ w, home }: BlockProps) {
-  const roots = home.categories.filter((c) => c.parentId === null).slice(0, w.limit);
-  const subs = (id: string) => home.categories.filter((c) => c.parentId === id).length;
+  const roots = home.categories
+    .filter((c) => c.parentId === null)
+    .slice(0, w.limit);
+  const subs = (id: string) =>
+    home.categories.filter((c) => c.parentId === id).length;
   const action = (
     <Link href="/categories" className="text-sm text-primary hover:underline">
       Ver todas
     </Link>
   );
-  if (roots.length === 0) return <Block title={w.title} action={action}><Empty text="Nenhuma categoria ainda." /></Block>;
+  if (roots.length === 0)
+    return (
+      <Block title={w.title} action={action}>
+        <Empty text="Nenhuma categoria ainda." />
+      </Block>
+    );
   return (
     <Block title={w.title} action={action}>
       {w.variant === "list" ? (
         <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
           {roots.map((c) => (
             <li key={c.id}>
-              <Link href={`/c/${c.slug}`} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-secondary/60">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-base">{c.icon ?? "📁"}</span>
+              <Link
+                href={`/c/${c.slug}`}
+                className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-secondary/60"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-base">
+                  {c.icon ?? "📁"}
+                </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">{c.name}</span>
-                  {subs(c.id) > 0 && <span className="block text-xs text-muted-foreground">{subs(c.id)} subcategoria(s)</span>}
+                  <span className="block truncate text-sm font-medium">
+                    {c.name}
+                  </span>
+                  {subs(c.id) > 0 && (
+                    <span className="block text-xs text-muted-foreground">
+                      {subs(c.id)} subcategoria(s)
+                    </span>
+                  )}
                 </span>
               </Link>
             </li>
@@ -206,10 +284,16 @@ function Categories({ w, home }: BlockProps) {
                 href={`/c/${c.slug}`}
                 className="group flex h-full items-start gap-3 rounded-xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xl group-hover:bg-primary/20">{c.icon ?? "📁"}</span>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xl group-hover:bg-primary/20">
+                  {c.icon ?? "📁"}
+                </span>
                 <span className="min-w-0">
                   <span className="block font-medium">{c.name}</span>
-                  {c.description && <span className="mt-0.5 line-clamp-2 block text-sm text-muted-foreground">{c.description}</span>}
+                  {c.description && (
+                    <span className="mt-0.5 line-clamp-2 block text-sm text-muted-foreground">
+                      {c.description}
+                    </span>
+                  )}
                 </span>
               </Link>
             </li>
@@ -220,11 +304,20 @@ function Categories({ w, home }: BlockProps) {
   );
 }
 
-const SOURCE_LINK: Record<string, string> = { recent: "/discover?section=recent", popular: "/discover?section=popular", trending: "/discover" };
+const SOURCE_LINK: Record<string, string> = {
+  recent: "/discover?section=recent",
+  popular: "/discover?section=popular",
+  trending: "/discover",
+};
 
 function Topics({ w, home }: BlockProps) {
   const topics = home.feeds[w.id] ?? [];
-  const more = w.source === "category" && w.category ? `/c/${w.category}` : w.source ? SOURCE_LINK[w.source] : undefined;
+  const more =
+    w.source === "category" && w.category
+      ? `/c/${w.category}`
+      : w.source
+        ? SOURCE_LINK[w.source]
+        : undefined;
   const action = more ? (
     <Link href={more} className="text-sm text-primary hover:underline">
       Ver mais
@@ -244,9 +337,16 @@ function Topics({ w, home }: BlockProps) {
         <ol className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
           {topics.map((t, i) => (
             <li key={t.id}>
-              <Link href={`/t/${t.id}`} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-secondary/60">
-                <span className="w-5 text-right font-semibold tabular-nums text-muted-foreground">{i + 1}</span>
-                <span className="min-w-0 flex-1 truncate font-medium">{t.title}</span>
+              <Link
+                href={`/t/${t.id}`}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-secondary/60"
+              >
+                <span className="w-5 text-right font-semibold tabular-nums text-muted-foreground">
+                  {i + 1}
+                </span>
+                <span className="min-w-0 flex-1 truncate font-medium">
+                  {t.title}
+                </span>
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <MessageSquare className="h-3.5 w-3.5" />
                   {formatCount(t.replyCount)}
@@ -273,15 +373,32 @@ function TopicCard({ t }: { t: Topic }) {
         href={`/t/${t.id}`}
         className="flex h-full flex-col rounded-xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
       >
-        <span className="line-clamp-2 font-semibold leading-snug">{t.title}</span>
-        <span className="mt-1.5 line-clamp-3 flex-1 text-sm text-muted-foreground">{t.content}</span>
+        <span className="line-clamp-2 font-semibold leading-snug">
+          {t.title}
+        </span>
+        <span className="mt-1.5 line-clamp-3 flex-1 text-sm text-muted-foreground">
+          {t.content}
+        </span>
         <span className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-          <UserAvatar name={t.author.displayName} url={t.author.avatarUrl} className="h-5 w-5 text-[10px]" />
+          <UserAvatar
+            name={t.author.displayName}
+            url={t.author.avatarUrl}
+            className="h-5 w-5 text-[10px]"
+          />
           <span className="truncate">{t.author.displayName}</span>
           <span className="ml-auto flex shrink-0 items-center gap-2.5">
-            <span className="flex items-center gap-1"><MessageSquare className="h-3 w-3" />{formatCount(t.replyCount)}</span>
-            <span className="flex items-center gap-1"><Heart className="h-3 w-3" />{formatCount(t.likeCount)}</span>
-            <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{formatCount(t.viewCount)}</span>
+            <span className="flex items-center gap-1">
+              <MessageSquare className="h-3 w-3" />
+              {formatCount(t.replyCount)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Heart className="h-3 w-3" />
+              {formatCount(t.likeCount)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Eye className="h-3 w-3" />
+              {formatCount(t.viewCount)}
+            </span>
           </span>
         </span>
       </Link>
@@ -298,8 +415,16 @@ function Members({ w, home }: BlockProps) {
         <ul className="flex flex-wrap gap-2 rounded-xl border border-border bg-card p-4">
           {users.map((u) => (
             <li key={u.id}>
-              <Link href={`/u/${u.username}`} title={u.displayName} className="block rounded-full ring-2 ring-transparent transition hover:ring-primary">
-                <UserAvatar name={u.displayName} url={u.avatarUrl} className="h-10 w-10" />
+              <Link
+                href={`/u/${u.username}`}
+                title={u.displayName}
+                className="block rounded-full ring-2 ring-transparent transition hover:ring-primary"
+              >
+                <UserAvatar
+                  name={u.displayName}
+                  url={u.avatarUrl}
+                  className="h-10 w-10"
+                />
               </Link>
             </li>
           ))}
@@ -308,13 +433,26 @@ function Members({ w, home }: BlockProps) {
         <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
           {users.map((u) => (
             <li key={u.id}>
-              <Link href={`/u/${u.username}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary/60">
-                <UserAvatar name={u.displayName} url={u.avatarUrl} className="h-8 w-8" />
+              <Link
+                href={`/u/${u.username}`}
+                className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary/60"
+              >
+                <UserAvatar
+                  name={u.displayName}
+                  url={u.avatarUrl}
+                  className="h-8 w-8"
+                />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">{u.displayName}</span>
-                  <span className="block text-xs text-muted-foreground">@{u.username}</span>
+                  <span className="block truncate text-sm font-medium">
+                    {u.displayName}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    @{u.username}
+                  </span>
                 </span>
-                <span className="text-right text-xs tabular-nums text-muted-foreground">{formatCount(u.followers)} seg.</span>
+                <span className="text-right text-xs tabular-nums text-muted-foreground">
+                  {formatCount(u.followers)} seg.
+                </span>
               </Link>
             </li>
           ))}
@@ -331,17 +469,34 @@ function ActivityFeed({ w, home }: BlockProps) {
     <Block title={w.title}>
       <ul className="space-y-3 rounded-xl border border-border bg-card p-4">
         {items.map((a) => (
-          <li key={`${a.kind}-${a.id}`} className="flex items-start gap-3 text-sm">
-            <UserAvatar name={a.actor.displayName} url={a.actor.avatarUrl} className="h-7 w-7 text-xs" />
+          <li
+            key={`${a.kind}-${a.id}`}
+            className="flex items-start gap-3 text-sm"
+          >
+            <UserAvatar
+              name={a.actor.displayName}
+              url={a.actor.avatarUrl}
+              className="h-7 w-7 text-xs"
+            />
             <p className="min-w-0 flex-1">
-              <Link href={`/u/${a.actor.username}`} className="font-medium hover:underline">
+              <Link
+                href={`/u/${a.actor.username}`}
+                className="font-medium hover:underline"
+              >
                 {a.actor.displayName}
               </Link>{" "}
-              <span className="text-muted-foreground">{a.kind === "topic" ? "abriu" : "respondeu em"}</span>{" "}
-              <Link href={`/t/${a.topicId}`} className="font-medium hover:underline">
+              <span className="text-muted-foreground">
+                {a.kind === "topic" ? "abriu" : "respondeu em"}
+              </span>{" "}
+              <Link
+                href={`/t/${a.topicId}`}
+                className="font-medium hover:underline"
+              >
                 {a.topicTitle}
               </Link>
-              <span className="block text-xs text-muted-foreground">{timeAgo(a.createdAt)}</span>
+              <span className="block text-xs text-muted-foreground">
+                {timeAgo(a.createdAt)}
+              </span>
             </p>
             <ActivityIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           </li>
