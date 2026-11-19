@@ -58,16 +58,28 @@ export default function HomePage() {
         }
       >
         {hasPermission("settings.manage") && (
-          <Button variant="outline" size="sm" className="absolute right-4 top-4" asChild>
+          <Button variant="outline" size="sm" className="absolute right-4 top-4 z-10 bg-background/70 backdrop-blur" asChild>
             <Link href="/admin/home">
               <Settings2 className="h-4 w-4" />
               Personalizar
             </Link>
           </Button>
         )}
-        <div className="max-w-2xl space-y-4">
-          {welcome && <p className="text-sm font-medium text-primary">{welcome}</p>}
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{s["home.banner.title"]}</h1>
+        {!s["home.banner.image"] && (
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-primary/25 blur-3xl" />
+            <div className="absolute -bottom-32 right-1/3 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+            <div className="absolute inset-0 bg-[radial-gradient(hsl(var(--foreground)/0.07)_1px,transparent_1px)] [background-size:18px_18px] [mask-image:linear-gradient(to_left,black,transparent_70%)]" />
+          </div>
+        )}
+        <div className="relative max-w-2xl space-y-5">
+          {welcome && (
+            <p className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+              <Sparkles className="h-3.5 w-3.5" />
+              {welcome}
+            </p>
+          )}
+          <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">{s["home.banner.title"]}</h1>
           {s["home.banner.subtitle"] && <p className="text-lg text-muted-foreground">{s["home.banner.subtitle"]}</p>}
           <div className="flex flex-wrap gap-3 pt-2">
             {s["home.banner.ctaLabel"] && (
@@ -96,7 +108,7 @@ export default function HomePage() {
       {show("stats") && home.stats && (
         <section className="space-y-3">
           <SectionTitle>{s["home.section.stats.title"]}</SectionTitle>
-          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-5">
             {[
               { label: "Membros", value: home.stats.users, icon: Users },
               { label: "Tópicos", value: home.stats.topics, icon: MessagesSquare },
@@ -104,12 +116,12 @@ export default function HomePage() {
               { label: "Categorias", value: home.stats.categories, icon: Folder },
               { label: "Curtidas", value: home.stats.likes, icon: Heart },
             ].map(({ label, value, icon: Icon }) => (
-              <div key={label} className="rounded-xl border border-border bg-card p-4">
-                <dt className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Icon className="h-3.5 w-3.5" />
+              <div key={label} className="bg-card px-5 py-5">
+                <dt className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <Icon className="h-3.5 w-3.5 text-primary" />
                   {label}
                 </dt>
-                <dd className="mt-1 text-2xl font-bold tabular-nums">{formatCount(value)}</dd>
+                <dd className="mt-2 text-3xl font-bold tracking-tight tabular-nums">{formatCount(value)}</dd>
               </div>
             ))}
           </dl>
@@ -140,8 +152,13 @@ export default function HomePage() {
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {roots.map((c) => (
               <li key={c.id}>
-                <Link href={`/c/${c.slug}`} className="flex h-full items-start gap-3 rounded-xl border border-border bg-card p-4 hover:bg-secondary/60">
-                  <span className="text-xl leading-none">{c.icon ?? "📁"}</span>
+                <Link
+                  href={`/c/${c.slug}`}
+                  className="group flex h-full items-start gap-3 rounded-xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xl leading-none transition-colors group-hover:bg-primary/20">
+                    {c.icon ?? "📁"}
+                  </span>
                   <span className="min-w-0">
                     <span className="block font-medium">{c.name}</span>
                     {c.description && <span className="mt-0.5 line-clamp-2 block text-sm text-muted-foreground">{c.description}</span>}
@@ -229,7 +246,8 @@ export default function HomePage() {
 
 function SectionTitle({ children, icon }: { children: React.ReactNode; icon?: React.ReactNode }) {
   return (
-    <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+    <h2 className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
+      <span aria-hidden className="h-5 w-1 rounded-full bg-primary" />
       {icon}
       {children}
     </h2>
