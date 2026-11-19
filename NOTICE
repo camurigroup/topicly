@@ -1,0 +1,27 @@
+Topicly
+Copyright (C) 2026 imPCamuriDev
+
+Este produto inclui software desenvolvido como parte do projeto Topicly.
+
+O Topicly é software livre: você pode redistribuí-lo e/ou modificá-lo sob os
+termos da GNU Affero General Public License, conforme publicada pela Free
+Software Foundation, na versão 3 da Licença ou (a seu critério) qualquer versão
+posterior. O texto integral está no arquivo LICENSE.
+
+O Topicly é distribuído na esperança de que seja útil, mas SEM QUALQUER
+GARANTIA; sem mesmo a garantia implícita de COMERCIABILIDADE ou ADEQUAÇÃO A UM
+PROPÓSITO ESPECÍFICO. Veja a GNU Affero General Public License para detalhes.
+
+Aviso sobre uso em rede (seção 13 da AGPL-3.0): se você modificar o Topicly e
+oferecê-lo para usuários interagirem com ele por uma rede, deve oferecer a esses
+usuários o código-fonte correspondente da sua versão modificada.
+
+A marca "Topicly", seu nome e seus logotipos NÃO são licenciados pela AGPL-3.0.
+O uso da marca é regido por TRADEMARK.md.
+
+Componentes de terceiros mantêm suas próprias licenças, indicadas em
+apps/api/go.mod (módulos Go) e apps/web/package.json (pacotes npm), incluindo,
+entre outros: pgx, go-sql-driver/mysql, golang-jwt, google/uuid,
+golang.org/x/crypto, golang.org/x/text, minio-go, Next.js, React, Tailwind CSS,
+Radix UI, lucide-react, next-themes, class-variance-authority, clsx e
+tailwind-merge.
