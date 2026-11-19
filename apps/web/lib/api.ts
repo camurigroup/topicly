@@ -387,6 +387,24 @@ export interface Activity {
 
 export type SiteSettings = Record<string, string>;
 
+export type WidgetType = "hero" | "intro" | "stats" | "categories" | "topics" | "members" | "activity";
+export type WidgetColumn = "full" | "main" | "side";
+export type TopicSource = "recent" | "popular" | "trending" | "featured" | "roles" | "category";
+
+/** One block of the configurable home layout (see site/layout.go). */
+export interface HomeWidget {
+  id: string;
+  type: WidgetType;
+  enabled: boolean;
+  column: WidgetColumn;
+  title: string;
+  variant: string;
+  limit: number;
+  source?: TopicSource;
+  roles?: string[];
+  category?: string;
+}
+
 export interface HomeData {
   settings: SiteSettings;
   stats?: SiteStats;
@@ -396,6 +414,8 @@ export interface HomeData {
   popularTopics: Topic[];
   featuredUsers: FeaturedUser[];
   activity: Activity[];
+  layout: HomeWidget[];
+  feeds: Record<string, Topic[]>;
 }
 
 export interface SettingDefinition {
