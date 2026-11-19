@@ -146,3 +146,17 @@ func newID() string {
 	}
 	return hex.EncodeToString(b)
 }
+
+// SecurityHeaders sets defensive HTTP headers on every response. The API only
+// serves JSON and uploaded images, so framing and sniffing are never needed.
+func SecurityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		h.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		h.Set("Cross-Origin-Resource-Policy", "cross-origin")
+		next.ServeHTTP(w, r)
+	})
+}

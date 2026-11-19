@@ -107,6 +107,7 @@ func (s *Server) routes() http.Handler {
 
 	return middleware.Chain(root,
 		middleware.RequestID,
+		middleware.SecurityHeaders,
 		withClientIP,
 		middleware.Logger(s.logger),
 		middleware.Recover(s.logger),
