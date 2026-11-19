@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 
 import { AuthProvider } from "@/components/auth-provider";
+import { InstallGate } from "@/components/install-gate";
 import { NotificationsProvider } from "@/components/notifications-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -45,6 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <AuthProvider>
               <NotificationsProvider>
                 <div className="flex min-h-screen flex-col">
+                  <InstallGate />
                   <SiteHeader />
                   <main className="container flex-1 py-10">{children}</main>
                   <SiteFooter />
